@@ -13,6 +13,7 @@ i <- list.files("/Users/littlesunsh9/Documents/planet_order_181828/", pattern = 
 #Metadata List
 c <- list.files("/Users/littlesunsh9/Documents/planet_order_181828/", pattern = "*AnalyticMS_metadata.xml$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
 
+# LOOP STARTS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 for (q in 1:(length(i))){
 
 fn <- c[q]
@@ -41,6 +42,7 @@ rbrick <- brick(r)
 # calculate normalized difference water index (NDWI).  :
 # calculate NDWI using the green (band 2) and nir (band 4) bands
 ndwi <- ((rc2*r[[2]]) - (rc4*r[[4]])) / ((rc2*r[[2]]) + (rc4*r[[4]]))
+# This formulation follows: Gao, B. (1996). NDWI—A normalized difference water index for remote sensing of vegetation liquid water from space. Remote Sensing of Environment, 53(3), p. 257-266. https://www.sciencedirect.com/science/article/abs/pii/S0034425796000673
 
 # To view, during development
 #plot(ndwi)
@@ -59,4 +61,6 @@ writeRaster(x = ndwi,
             overwrite = TRUE)  # OPTIONAL - be careful. This will OVERWRITE previous files.
 #attempting the following crop procedure https://gis.stackexchange.com/questions/229356/crop-a-raster-file-in-r
 #attempting the following NDVI as NDWI procedure https://www.earthdatascience.org/courses/earth-analytics/multispectral-remote-sensing-data/vegetation-indices-NDVI-in-R/
+
+# LOOP ENDS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 }

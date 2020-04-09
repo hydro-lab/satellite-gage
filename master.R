@@ -15,7 +15,6 @@ c <- list.files("/Users/littlesunsh9/Documents/planet_order_181828/", pattern = 
 
 # LOOP STARTS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 for (q in 1:(length(i))){
-  
   fn <- c[q]
   fl <- xmlParse(fn)
   rc <- setNames(xmlToDataFrame(node=getNodeSet(fl, "//ps:EarthObservation/gml:resultOf/ps:EarthObservationResult/ps:bandSpecificMetadata/ps:reflectanceCoefficient")),"reflectanceCoefficient")
@@ -63,20 +62,14 @@ for (q in 1:(length(i))){
   #attempting the following NDVI as NDWI procedure https://www.earthdatascience.org/courses/earth-analytics/multispectral-remote-sensing-data/vegetation-indices-NDVI-in-R/
   
   # LOOP ENDS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-}
+
 
 # This code finds the boundary of the water in a normalized difference water index image based on the histogram of the pixel values.
 # this code uses the cropped, single-layer, NDWI image
 
-d <- list.files("/Users/littlesunsh9/Documents/planet_order_181828/", pattern = "*cndwi.tif$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
-
-for (L in 1:(length(d))){
-
 # Import raster image, or take it from previous code, set working directory, if needed.
-fn <- d[L]
-x = raster(fn)
-y <- x[]
-h = hist(y, breaks=seq(-1,1,by=0.01)) # built-in histogram function.
+
+h = hist(ndwi, breaks=seq(-1,1,by=0.01)) # built-in histogram function.
 # Positions: h$mids       number
 # Values:    h$counts     integer
 bins <- h$mids
@@ -88,8 +81,8 @@ peaks <- array(0, dim = c(200,10))
 nop <- array(0, dim = c(1,10))
 for (w in 1:10){
   # filter values (v=h$counts) with the averaging window size 2*w+1
-  for (i in (w+1):(200-w)){
-    avg[i,w] <- ((sum(v[(i-w):(i+w)]))/((2*w)+1))
+  for (k in (w+1):(200-w)){
+    avg[k,w] <- ((sum(v[(k-w):(k+w)]))/((2*w)+1))
   }
   # identify and number peaks
   cnt <- 0
@@ -155,8 +148,11 @@ for (w in 1:10){
 }
 
 # write to file
-date <- Sys.Date()
-write.table((c(threepeak, twopeak, date)), file = "wateredge.txt", append = TRUE, sep = ", ", dec = ".")
+date <- as.character(Sys.Date())
+ex <- data.frame(threepeak, twopeak, date)
+write.table(ex, file = "wateredge.csv", append = TRUE, sep = ",", dec = ".", col.names = FALSE)
+#write.txt((c(threepeak, twopeak, date)), file = "wateredge.txt", append = TRUE, sep = ", ", dec = ".")
+#write.csv(ex,file = "wateredge.csv")
 # output will be in the same order as the input files
 
 }

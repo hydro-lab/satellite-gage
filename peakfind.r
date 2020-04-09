@@ -6,9 +6,11 @@ library(rgdal)
 library(rgeos)
 
 # Import raster image, or take it from previous code, set working directory, if needed.
-setwd("/Volumes/LaCie2big/widthflowproject/r_test")
+setwd("/Users/littlesunsh9/Documents/planet_order_181828/")
 
-fn <- "./20180212cNDWI.tif"
+d <- list.files("/Users/littlesunsh9/Documents/planet_order_181828/", pattern = "*cndwi.tif$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
+for (L in 1:(length(d))){
+fn <- d[L]
 x = raster(fn)
 y <- x[]
 h = hist(y, breaks=seq(-1,1,by=0.01)) # built-in histogram function.
@@ -79,7 +81,7 @@ for (w in 1:10){
     }
     # finds minimum between first and second peak
     m <- max(v) # create variable for minimum, initially set higher than any value
-    for (j in (sec):(thr)){
+    for (j in (fst):(sec)){
       if ((avg[j,w])<m){
         goal <- j
         m <- avg[j,w]
@@ -88,7 +90,7 @@ for (w in 1:10){
     twopeak <- (bins[(goal)])
   }
 }
-
+}
 # write to file
 date <- Sys.Date()
 write.table((c(threepeak, twopeak, date)), file = "wateredge.txt", append = TRUE, sep = ", ", dec = ".")

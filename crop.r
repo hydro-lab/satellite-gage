@@ -33,7 +33,8 @@ pic <- stack(fn)
 # set extent from QGIS analysis:
 # extent format (xmin,xmax,ymin,ymax)
 e <- as(extent(609555.5999,609709.1999,4507753.099,4507867.5999 ), 'SpatialPolygons')
-crs(e) <- "+proj=longlat +datum=WGS84 +no_defs"
+#crs(e) <- "+proj=longlat +datum=WGS84 +no_defs"
+crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
 r <- crop(pic, e)
 
 #options(stringsAsFactors = FALSE)

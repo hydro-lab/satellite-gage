@@ -9,13 +9,16 @@ library(methods)
 setwd("/Users/littlesunsh9/Documents/planet_order_181828/")
 #Lists for necessary files
 #Image list
-i <- list.files("/Users/littlesunsh9/Documents/planet_order_181828/", pattern = "*AnalyticMS.tif$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
+im <- list.files("/Users/littlesunsh9/Documents/planet_order_181828/", pattern = "*AnalyticMS.tif$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
 #Metadata List
-c <- list.files("/Users/littlesunsh9/Documents/planet_order_181828/", pattern = "*AnalyticMS_metadata.xml$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
+g <- list.files("/Users/littlesunsh9/Documents/planet_order_181828/", pattern = "*AnalyticMS_metadata.xml$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
+
+width <- array(-9, dim=c(length(im),2))
 
 # LOOP STARTS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-for (q in 1:(length(i))){
-  fn <- c[q]
+for (q in 1:(2)){#length(im)
+  #Import raw Planet metadata
+  fn <- g[q]
   fl <- xmlParse(fn)
   rc <- setNames(xmlToDataFrame(node=getNodeSet(fl, "//ps:EarthObservation/gml:resultOf/ps:EarthObservationResult/ps:bandSpecificMetadata/ps:reflectanceCoefficient")),"reflectanceCoefficient")
   dm <- as.matrix(rc)
@@ -26,8 +29,8 @@ for (q in 1:(length(i))){
   rc2 <- as.numeric(dm[2]) # Green
   rc4 <- as.numeric(dm[4]) # NIR
   
-  # Import raster image
-  fn <- i[q]
+  # Import raster image, crops to chosen extent
+  fn <- im[q]
   pic <- stack(fn)
   # set extent from QGIS analysis:
   # extent format (xmin,xmax,ymin,ymax)
@@ -44,29 +47,27 @@ for (q in 1:(length(i))){
   ndwi <- ((rc2*r[[2]]) - (rc4*r[[4]])) / ((rc2*r[[2]]) + (rc4*r[[4]]))
   # This formulation follows: Gao, B. (1996). NDWI—A normalized difference water index for remote sensing of vegetation liquid water from space. Remote Sensing of Environment, 53(3), p. 257-266. https://www.sciencedirect.com/science/article/abs/pii/S0034425796000673
   
-  # To view, during development
+  # To view, during development:
   #plot(ndwi)
   
-  p <- strsplit(i[q], "_3B_AnalyticMS.tif")
+  # To export cropped NDWI as a new file and create filename root
+  p <- strsplit(im[q], "_3B_AnalyticMS.tif")
   r <- strsplit(p[[1]], "/")
   lr <- tolower(r[[1]])
   len <- length(lr)
   root <- lr[[len]]
   
-  # To export NDWI as a new file
   writeRaster(x = ndwi,
               filename= paste(root, "cndwi.tif", sep="."),
               format = "GTiff", # save as a tif
               # save as a FLOAT if not default, not integer
               overwrite = TRUE)  # OPTIONAL - be careful. This will OVERWRITE previous files.
+  
   #attempting the following crop procedure https://gis.stackexchange.com/questions/229356/crop-a-raster-file-in-r
   #attempting the following NDVI as NDWI procedure https://www.earthdatascience.org/courses/earth-analytics/multispectral-remote-sensing-data/vegetation-indices-NDVI-in-R/
   
-  # LOOP ENDS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  
-  
   # This code finds the boundary of the water in a normalized difference water index image based on the histogram of the pixel values.
-  # this code uses the cropped, single-layer, NDWI image
+  # This code uses the cropped, single-layer, NDWI image
   
   # Import raster image, or take it from previous code, set working directory, if needed.
   
@@ -147,8 +148,9 @@ for (q in 1:(length(i))){
       twopeak <- (bins[(goal)])
     }
   }
+  # Water's Edge LOOP ENDS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   
-  # write to file
+  # write individual water's edge values to the compiled water's edge file
   date <- as.character(Sys.Date())
   ex <- data.frame(threepeak, twopeak, date)
   write.table(ex, file = "wateredge.csv", append = TRUE, sep = ",", dec = ".", col.names = FALSE)
@@ -156,41 +158,34 @@ for (q in 1:(length(i))){
   #write.csv(ex,file = "wateredge.csv")
   # output will be in the same order as the input files
   
-}
-# run in command line as:
-# r -f peaktest.r
-# make sure input and output filenames are coded correctly
-# https://cran.r-project.org/doc/manuals/R-intro.html#Invoking-R-from-the-command-line
-
-setwd("/Users/littlesunsh9/Documents/planet_order_181828/")
-
-cndwi <- list.files("/Users/littlesunsh9/Documents/planet_order_181828/", pattern = "*.cndwi.tif$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
-for (q in 1:(length(cndwi))){
-  fn <- cndwi[q]
-  ndwia <- stack(fn)
-  e <- as(extent(609555.5999,609709.1999,4507753.099,4507867.5999 ), 'SpatialPolygons')
-  crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
+  #Finding values along the width of the transect
+  #cndwi <- list.files("/Users/littlesunsh9/Documents/planet_order_181828/", pattern = "*.cndwi.tif$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
+  #for (q in 1:(length(cndwi))){
+  # fn <- cndwi[q]
+  #ndwia <- stack(fn)
+  #e <- as(extent(609555.5999,609709.1999,4507753.099,4507867.5999 ), 'SpatialPolygons')
+  #crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
   #RDB=(609589.376, 4507801.407)
   #LDB=(609634.607, 4507831.586)
   x1 <- (609589.376)
   x2 <- (609634.607)
   y1 <- (4507801.407)
   y2 <- (4507831.586)
-  m <- (y2-y1)/(x2-x1)
+  ma <- (y2-y1)/(x2-x1)
   #this next part will rely on UTM (the coordinates are in meters)
-  r <- (0.1)
+  ra <- (0.1)
   #r is the step size of each point along our width
   t <- sqrt(((x2-x1)^2)+ ((y2-y1)^2))
-  f <- ceiling(t/r)
+  f <- ceiling(t/ra)
   pointers <- array(999.999, dim = c(f,2))
   pointers[1,1] <- x1
   pointers[1,2] <- y1
   for (i in 2:f){
     a <- 1
     b <- (-2)*pointers[i-1,1]
-    c <- (pointers[i-1,1]^2) - (r^2)/((m^2)+1)
+    c <- (pointers[i-1,1]^2) - (ra^2)/((ma^2)+1)
     pointers[i,1] <- ((-b)+(sqrt((b^2)-4*a*c)))/(2*a)
-    pointers[i,2] <- ((pointers[i-1,2])+(m*((pointers[i,1])-(pointers[i-1,1]))))
+    pointers[i,2] <- ((pointers[i-1,2])+(ma*((pointers[i,1])-(pointers[i-1,1]))))
   }
   
   #Check:
@@ -198,18 +193,81 @@ for (q in 1:(length(cndwi))){
   #y <- c(y1,y2)
   #plot(x,y)
   
-  P <- SpatialPoints(pointers)
+  spat <- SpatialPoints(pointers)
   
-  alng <- extract(ndwia, P, method='simple')
+  alng <- extract(ndwi, spat, method='simple')
   plot(alng)
   
-  p <- strsplit(cndwi[q], "cndwi.tif")
-  r <- strsplit(p[[1]], "/")
-  lr <- tolower(r[[1]])
-  len <- length(lr)
-  root <- lr[[len]]
+  #p <- strsplit(ndwi[q], "cndwi.tif")
+  #r <- strsplit(p[[1]], "/")
+  #lr <- tolower(r[[1]])
+  #len <- length(lr)
+  #root <- lr[[len]]
   
   # To export table as a new file
   write.table(alng, file = paste(root, "distwidth.csv", sep="."), append = TRUE, sep = ",", dec = ".", col.names = FALSE)
   
+  alng_per <- array(-9, dim=c(f,2)) #allocation for the midpoints
+  #when you reach -9 in that array you've reached the end of the midpoints/values found
+  restart <- 2 #initial start for i search
+  for (j in 1:f){
+    cnt=1
+    for (i in restart:f){
+      if (alng[i]==alng[i-1]){
+        cnt=cnt+1
+      } 
+      else {
+        restart <- i+1 #to keep moving forward from the last section without causing a loop at the end of it
+        break
+      }
+    }
+    mp <- ((cnt*ra)/2) #ra is the spacing, and mp gives the midpoint of the current distance section
+    if (i<(f)){
+      alng_per[j,1] <- (((i-1)*ra)-mp) #this makes the first column the location along the index where the midpoint is located, as i will be the end of the section, take away the mp value, and you get the correct location
+      alng_per[j,2] <- alng[i-1] 
+    }
+    else{
+      alng_per[j,1] <- ((f*ra)-mp) #this makes the first column the location along the index where the midpoint is located, as i will be the end of the section, take away the mp value, and you get the correct location
+      alng_per[j,2] <- alng[i-1] 
+    }
+    if (i>=(f)){
+      break
+    } 
+  }
+  
+  for (i in (2:f)){
+    if (alng_per[i,2]>threepeak){
+      if (alng_per[i-1,2]<threepeak){
+        i1 <- alng_per[i-1,1]
+        i2 <- alng_per[i,1]
+        j1 <- alng_per[i-1,2]
+        j2 <- alng_per[i,2]
+        n <- threepeak    
+        RDB <- ((n-(j1))*((i2-i1)/(j2-j1))+i1)
+        break
+      }
+    }
+  }
+  for (i in 1:(f-1)){
+    if (alng_per[f-i,2]>threepeak){        #expressing the index such that when i = 1, f, and when i = 2, f-1.
+      if (alng_per[f-i+1,2]<threepeak){
+        i1 <- alng_per[f-i+1,1]
+        i2 <- alng_per[f-1,1]
+        j1 <- alng_per[f-i+1,2]
+        j2 <- alng_per[f-1,2]
+        n <- threepeak    
+        LDB <- ((n-(j1))*((i2-i1)/(j2-j1))+i1)
+        break
+      }
+    }
+  }
+  width[q,1] <- root
+  width[q,2] <- LDB-RDB #gives width in meters
 }
+
+write.table(width, file = "width.csv", append = TRUE, sep = ",", dec = ".", col.names = FALSE)
+
+# run in command line as:
+# r -f peaktest.r
+# make sure input and output filenames are coded correctly
+# https://cran.r-project.org/doc/manuals/R-intro.html#Invoking-R-from-the-command-line

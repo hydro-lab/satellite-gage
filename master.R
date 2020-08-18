@@ -1,3 +1,5 @@
+#Run in command line as: Rscript master.R
+
 # Raster calcultion to crop Geotiff, also pulls XML metadata: reflectance coefficient (ps:reflectanceCoefficient)
 library(rgdal)
 library(raster)
@@ -6,17 +8,29 @@ library(XML)
 library(methods)
 
 # remember to set working directory if needed:
-setwd("/Users/littlesunsh9/Documents/planet_order_181828/")
+setwd("/Users/littlesunsh9/Documents/Kahler Lab/planet_order_181828/")
 #Lists for necessary files
 #Image list
-im <- list.files("/Users/littlesunsh9/Documents/planet_order_181828/", pattern = "*AnalyticMS.tif$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
+im <- list.files("/Users/littlesunsh9/Documents/Kahler Lab/planet_order_181828/", pattern = "*AnalyticMS.tif$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
 #Metadata List
-g <- list.files("/Users/littlesunsh9/Documents/planet_order_181828/", pattern = "*AnalyticMS_metadata.xml$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
+g <- list.files("/Users/littlesunsh9/Documents/Kahler Lab/planet_order_181828/", pattern = "*AnalyticMS_metadata.xml$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
 
-width <- array(-9, dim=c(length(im),2))
+#Inputs from 
+#cald <- 4.3; # calibration discharge (the measured discharge), cubic meters per second
+#calw <- 27.8; # calibration width (the measured width), meters
+#S_0 <- 0.0006;# the measured streamwise slope
+#INPUT FILES:
+#profile <- read.table('bcprofile.txt'); #txt readable file of depths where 
+# cross-stream-distance is C1 and measured depth is C2. 
+# File must be sorted by cross-stream-distance in ascending order (from 0:width, top:bottom)
+#profile_headerlines=1;
+#widths <- read.table('widths.txt');
+
+width <- array(-9, dim=c(length(im),6)) #creates the output file as an array that can be easily read as a table
+prowidths <- array(-9, dim=c(length(im),2)) #creates the output file for the parameters for Mannings callibration/use
 
 # LOOP STARTS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-for (q in 1:(2)){#length(im)
+for (q in 1:(length(im))){
   #Import raw Planet metadata
   fn <- g[q]
   fl <- xmlParse(fn)
@@ -66,6 +80,8 @@ for (q in 1:(2)){#length(im)
   #attempting the following crop procedure https://gis.stackexchange.com/questions/229356/crop-a-raster-file-in-r
   #attempting the following NDVI as NDWI procedure https://www.earthdatascience.org/courses/earth-analytics/multispectral-remote-sensing-data/vegetation-indices-NDVI-in-R/
   
+  width[q,1] <- root #for output file: root name of image
+  
   # This code finds the boundary of the water in a normalized difference water index image based on the histogram of the pixel values.
   # This code uses the cropped, single-layer, NDWI image
   
@@ -76,6 +92,16 @@ for (q in 1:(2)){#length(im)
   # Values:    h$counts     integer
   bins <- h$mids
   v <- h$counts
+  
+  #png(filename = root, "hist.png")
+  #plot(h)
+  #dev.copy(png, filename = paste(root, "hist.png", sep = "."))
+  #dev.off()
+  setEPS()
+  postscript(paste(root, "hist.eps", sep = "."))
+  plot(h)
+  dev.off()  
+  
   
   # Allocate arrays used in analysis
   avg <- array(0, dim = c(200,10))
@@ -150,6 +176,9 @@ for (q in 1:(2)){#length(im)
   }
   # Water's Edge LOOP ENDS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   
+  width[q,2] <-threepeak #for output file: value for the edge of water (3 peak)
+  width[q,3] <-twopeak #for output file: value for the edge of water (2 peak)
+  
   # write individual water's edge values to the compiled water's edge file
   date <- as.character(Sys.Date())
   ex <- data.frame(threepeak, twopeak, date)
@@ -196,7 +225,7 @@ for (q in 1:(2)){#length(im)
   spat <- SpatialPoints(pointers)
   
   alng <- extract(ndwi, spat, method='simple')
-  plot(alng)
+  #plot(alng)
   
   #p <- strsplit(ndwi[q], "cndwi.tif")
   #r <- strsplit(p[[1]], "/")
@@ -261,11 +290,22 @@ for (q in 1:(2)){#length(im)
       }
     }
   }
-  width[q,1] <- root
-  width[q,2] <- LDB-RDB #gives width in meters
+  width[q,4] <- LDB #location in meters of bank 1
+  width[q,5] <- RDB #location in meters of bank 2
+  width[q,6] <- LDB-RDB #gives width in meters
+  prowidths[q,1] <- root
+  prowidths[q,2] <- LDB-RDB
 }
+survey <- data.frame(width)
+names(survey)[1] <- "filename"
+names(survey)[2] <- "waters_edge_value_3peak"
+names(survey)[3] <- "waters_edge_value_2peak"
+names(survey)[4] <- "LDB_location_m"
+names(survey)[5] <- "RDB_location_m"
+names(survey)[6] <- "width_m"
+write.table(survey, file = "width.csv", append = TRUE, sep = ",", dec = ".", row.names = FALSE, col.names = TRUE)
 
-write.table(width, file = "width.csv", append = TRUE, sep = ",", dec = ".", col.names = FALSE)
+write.table(prowidths, file = "widths.txt", append = TRUE, sep = ",", dec = ".", row.names = FALSE, col.names = FALSE)
 
 # run in command line as:
 # r -f peaktest.r

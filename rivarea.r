@@ -10,7 +10,7 @@
 # number of headerlines
 # specs= specifications output file name
 # data= flow output file name
- # parameter #calls the above- described file
+# parameter #calls the above- described file
 
 profile <- read.table("bcprofile.txt")
 names(profile)[1] <- "W"
@@ -18,7 +18,7 @@ names(profile)[2] <- "d"
 
 W <- profile$W
 d <- profile$d
-    
+
 # This tests to determine if the depths are input as negative heights or
 # positive depths (i.e., orientation of the vertical coordinate).  This
 # corrects the values to be negative heights for this analysis
@@ -42,7 +42,7 @@ for (i in 2:(length(W)-1)){
     if ((d[i]>min_depth)&(d[i-1]<d[i])&(d[i]>d[i+1])){
         min_depth=d[i];
         min_depth_index=i;
-}
+    }
 }
 
 # Find the endpoints of the lowest stage possible in analysis.
@@ -61,8 +61,8 @@ for (i in (min_depth_index+2):(length(W))){
 #plot(x = (min_width_1 min_depth), y = (min_width_2 min_depth) );
 #min_width <- (min_width_2-min_width_1);
 #plot(profile, type = "p", main="Bathymetric Profile", 
-   #  xlab= "Cross-stream-distance (m)" ,
-   #  ylab ="Depth (m)") # Check units
+#  xlab= "Cross-stream-distance (m)" ,
+#  ylab ="Depth (m)") # Check units
 # min_width_index_1 is the first point below floor from the near bank
 # min_width_index_1 is the first point below floor from the far bank
 
@@ -91,48 +91,50 @@ if ((d[1]<d[length(W)])){
     }
 }
 # Scenario 2: depth at the far bank is lower, adjust near bank
-if d(1)>d(length(W))
-    max_depth=d(length(W));
-    for i=2:min_width_index_1
-        if d(i-1)>d(length(W))&&d(length(W))>d(i)
-            max_width_1=W(i-1)+((W(i)-W(i-1))/(d(i)-d(i-1)))*(d(length(W))-d(i-1));
+if (d[1]>(d[length(W)])){ 
+    max_depth=d[length(W)];
+    for (i in (2:(min_width_index_1))){ 
+        if ((d[i-1]>d[length(W)])&(d[length(W)]>d[i])){
+            max_width_1=W[i-1]+((W[i]-W[i-1])/(d[i]-d[i-1]))*(d[length(W)]-d[i-1]);
             max_width_index_1=i;
-        end
-    end
-end
+        }
+    }
+}
 
-max_width=max_width_2-max_width_1;
-plot([max_width_1 max_width_2],[max_depth max_depth],'-r');
+max_width = max_width_2-max_width_1;
+#lines([max_width_1 max_width_2],[max_depth max_depth]);
 
 # max_width_index_1 is the first point from the near bank that maps to far
 # max_width_index_2 is the first point from the far bank that maps to near
 
 # Generate width-to-depth function by determination of the widths at each
 # change of bank-slope.
-for i=(max_width_index_1):(min_width_index_1-1)
-    for j=min_width_index_2+1:(length(W))
-        if (d(j-1)<d(i))&&(d(i)<d(j))
-            new_far(i-max_width_index_1+1,1)=W(j-1)+(d(i)-d(j-1))*(W(j)-W(j-1))/(d(j)-d(j-1));
-            new_far(i-max_width_index_1+1,2)=d(i);
-        end
-    end
-end
-new_far(min_width_index_1,1)=min_width_2;
-new_far(min_width_index_1,2)=min_depth;
-for i=min_width_index_2+1:max_width_index_2
-    for j=2:min_width_index_1
-        if (d(j-1)>d(i))&&(d(i)>d(j))
-            new_near(i-min_width_index_2,1)=W(j-1)+(d(i)-d(j-1))*(W(j)-W(j-1))/(d(j)-d(j-1));
-            new_near(i-min_width_index_2,2)=d(i);
-        end
-    end
-end
+for (i in (max_width_index_1):(min_width_index_1-1)){
+    for (j in (min_width_index_2+1:(length[W]))){
+        if (((d[j-1]<d(i)))&((d(i)<d(j)))){
+            new_far[i-max_width_index_1+1,1]=W[j-1]+(d[i]-d[j-1])*(W[j]-W[j-1])/(d[j]-d[j-1]);
+            new_far[i-max_width_index_1+1,2]=d[i];
+        }
+    }
+}
+
+new_far(min_width_index_1,1) <- min_width_2;
+new_far(min_width_index_1,2) <- min_depth;
+for (i in (min_width_index_2+1:max_width_index_2)){
+    for (j in 2:min_width_index_1){
+        if (((d[j-1]>d[i]))&((d[i]>d[j]))){
+            new_near(i-min_width_index_2,1)=W[j-1]+(d[i]-d[j-1])*(W[j]-W[j-1])/(d[j]-d[j-1]);
+            new_near(i-min_width_index_2,2)=d[i];
+}
+}
+}
+
 new_near(max_width_index_2+1-min_width_index_2,1)=min_width_1;
 new_near(max_width_index_2+1-min_width_index_2,2)=min_depth;
 
-plot(W,d,'ob');
-plot(new_near(:,1),new_near(:,2),'xg');
-plot(new_far(:,1),new_far(:,2),'xg');
+#plot(W,d,'ob');
+#plot(new_near(:,1),new_near(:,2),'xg');
+#plot(new_far(:,1),new_far(:,2),'xg');
 
 # Assemble the bank positions to be used for widths.
 temp=[W d;new_near;new_far];

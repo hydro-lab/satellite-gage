@@ -46,40 +46,50 @@ for (i in 2:(length(W)-1)){
 }
 
 # Find the endpoints of the lowest stage possible in analysis.
-for i=2:min_depth_index
-    if d(i-1)>min_depth&&min_depth>d(i)
-        min_width_1=W(i-1)+((W(i)-W(i-1))/(d(i)-d(i-1)))*(min_depth-d(i-1));
+for (i in 2:(min_depth_index)){
+    if ((d[i-1]>min_depth)&(min_depth>d[i])){
+        min_width_1=W[i-1]+((W[i]-W[i-1])/(d[i]-d[i-1]))*(min_depth-d[i-1]);
         min_width_index_1=i;
-    end
-end
-for i=(min_depth_index+2):length(W)
-    if d(i-1)<min_depth&&min_depth<d(i)
-        min_width_2=W(i-1)+((W(i)-W(i-1))/(d(i)-d(i-1)))*(min_depth-d(i-1));
+    }
+}
+for (i in (min_depth_index+2):(length(W))){
+    if ((d[i-1]<min_depth)&(min_depth<d[i])){
+        min_width_2=W[i-1]+((W[i]-W[i-1])/(d[i]-d[i-1]))*(min_depth-d[i-1]);
         min_width_index_2=i-1;
-    end
-end
-plot([min_width_1 min_width_2],[min_depth min_depth],'-r');
-min_width=min_width_2-min_width_1;
-
+    }
+}
+#plot(x = (min_width_1 min_depth), y = (min_width_2 min_depth) );
+#min_width <- (min_width_2-min_width_1);
+#plot(profile, type = "p", main="Bathymetric Profile", 
+   #  xlab= "Cross-stream-distance (m)" ,
+   #  ylab ="Depth (m)") # Check units
 # min_width_index_1 is the first point below floor from the near bank
 # min_width_index_1 is the first point below floor from the far bank
 
 # Find the endpoints of the highest stage possible in analysis.
-max_width_1=W(1);
-max_width_2=W(length(W));
-max_depth=d(1);
+max_width_1=W[1];
+max_width_2=W[length(W)];
+max_depth=d[1];
 max_width_index_1=1;
 max_width_index_2=length(W);
 # In the event that the endpoints do not reach the same datum:
 # Scenario 1: depth at near bank is lower, adjust far bank
-if d(1)<d(length(W))
-    for i=(min_depth_index_2+1):length(W)
-        if d(i-1)<d(1)&&d(1)<d(i)
-            max_width_2=W(i-1)+((W(i)-W(i-1))/(d(i)-d(i-1)))*(d(1)-d(i-1));
+
+for (i in (min_depth_index+2):(length(W))){
+    if ((d[i-1]<min_depth)&(min_depth<d[i])){
+        min_width_2=W[i-1]+((W[i]-W[i-1])/(d[i]-d[i-1]))*(min_depth-d[i-1]);
+        min_width_index_2=i-1;
+    }
+}
+
+if ((d[1]<d[length(W)])){
+    for (i in (min_depth_index_2+1):length(W)){
+        if ((d[i-1]<d[1])&(d[1]<d[i])){
+            max_width_2=W[i-1]+((W[i]-W[i-1])/(d[i]-d[i-1]))*(d[1]-d[i-1]);
             max_width_index_2=i-1;
-        end
-    end
-end
+        }
+    }
+}
 # Scenario 2: depth at the far bank is lower, adjust near bank
 if d(1)>d(length(W))
     max_depth=d(length(W));
@@ -90,6 +100,7 @@ if d(1)>d(length(W))
         end
     end
 end
+
 max_width=max_width_2-max_width_1;
 plot([max_width_1 max_width_2],[max_depth max_depth],'-r');
 
@@ -118,6 +129,7 @@ for i=min_width_index_2+1:max_width_index_2
 end
 new_near(max_width_index_2+1-min_width_index_2,1)=min_width_1;
 new_near(max_width_index_2+1-min_width_index_2,2)=min_depth;
+
 plot(W,d,'ob');
 plot(new_near(:,1),new_near(:,2),'xg');
 plot(new_far(:,1),new_far(:,2),'xg');

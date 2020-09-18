@@ -1,16 +1,5 @@
-#This program takes in the depth v. cross-stream-distance profile and
-# outputs a width-to-area and -to-wetted-perimeter function, evaluated at
-# the widths provided.
-
-# Written by David M. Kahler, 12 April 2018, Duquesne University,
-# Pittsburgh, PA, 15282, USA.  This program is provided as-is without any
-# guarantees or warrenties.  The program may be used or modified as needed.
-# It was written in Matlab R2017a.  Please cite the published article in 
-# any submitted work.  For errors or questions, please contact: 
-# david.m.kahler@gmail.com.
-
 # This method depends on the parameterization of Manning's equation.  
-# Prepare a text file with the .m extension that contains the following
+# Prepare a text file that contains the following
 # variable definitions:
 # calibration_discharge= THE MEASURED DISCHARGE
 # calibration_width= THE MEASURED WIDTH
@@ -21,49 +10,51 @@
 # number of headerlines
 # specs= specifications output file name
 # data= flow output file name
- parameter #calls the above- described file
+ # parameter #calls the above- described file
 
-# PROFILE
-# Prepare a text file with the cross-stream-distance in the first column
-# and the measured depth at each distance in the second column.  Remember
-# to define filename and headerlines, and test to check format.  This list
-# MUST be sorted from smallest to largest width (top to bottom).
-[w,d]=textread(profile,'%f %f','headerlines',profile_headerlines);
+profile <- read.table("bcprofile.txt")
+names(profile)[1] <- "W"
+names(profile)[2] <- "d"
+
+W <- profile$W
+d <- profile$d
+    
 # This tests to determine if the depths are input as negative heights or
 # positive depths (i.e., orientation of the vertical coordinate).  This
 # corrects the values to be negative heights for this analysis
-if mean(d)>0
-    d=-d;
-end
-figure;
-plot(w,d,'-k')
-ylabel('Depth (m)');                 % Check units
-xlabel('Cross-stream-distance (m)'); % Check units
+
+if (mean(d)>0){
+    d = -d
+    profile$d = -profile$d
+}
+
+plot(profile, type = "p", main="Bathymetric Profile", 
+     xlab= "Cross-stream-distance (m)" ,
+     ylab ="Depth (m)") # Check units
+
 # The river bank at the lower cross-stream-distance will be referred to as
 # the near bank and the higher cross-stream-distance will be referred to
 # as the far bank.
-hold on;
-
 # Find any irregularities in the bathymetry.  This searches the depths to
 # find the heighest peak in the bathymetry and sets the lowest depth value.
-min_depth=min(d);
-for i=2:(length(w)-1)
-    if (d(i)>min_depth)&&(d(i-1)<d(i))&&(d(i)>d(i+1))
-        min_depth=d(i);
+min_depth <- min(d);
+for (i in 2:(length(W)-1)){
+    if ((d[i]>min_depth)&(d[i-1]<d[i])&(d[i]>d[i+1])){
+        min_depth=d[i];
         min_depth_index=i;
-    end
-end
+}
+}
 
 # Find the endpoints of the lowest stage possible in analysis.
 for i=2:min_depth_index
     if d(i-1)>min_depth&&min_depth>d(i)
-        min_width_1=w(i-1)+((w(i)-w(i-1))/(d(i)-d(i-1)))*(min_depth-d(i-1));
+        min_width_1=W(i-1)+((W(i)-W(i-1))/(d(i)-d(i-1)))*(min_depth-d(i-1));
         min_width_index_1=i;
     end
 end
-for i=(min_depth_index+2):length(w)
+for i=(min_depth_index+2):length(W)
     if d(i-1)<min_depth&&min_depth<d(i)
-        min_width_2=w(i-1)+((w(i)-w(i-1))/(d(i)-d(i-1)))*(min_depth-d(i-1));
+        min_width_2=W(i-1)+((W(i)-W(i-1))/(d(i)-d(i-1)))*(min_depth-d(i-1));
         min_width_index_2=i-1;
     end
 end
@@ -74,27 +65,27 @@ min_width=min_width_2-min_width_1;
 # min_width_index_1 is the first point below floor from the far bank
 
 # Find the endpoints of the highest stage possible in analysis.
-max_width_1=w(1);
-max_width_2=w(length(w));
+max_width_1=W(1);
+max_width_2=W(length(W));
 max_depth=d(1);
 max_width_index_1=1;
-max_width_index_2=length(w);
+max_width_index_2=length(W);
 # In the event that the endpoints do not reach the same datum:
 # Scenario 1: depth at near bank is lower, adjust far bank
-if d(1)<d(length(w))
-    for i=(min_depth_index_2+1):length(w)
+if d(1)<d(length(W))
+    for i=(min_depth_index_2+1):length(W)
         if d(i-1)<d(1)&&d(1)<d(i)
-            max_width_2=w(i-1)+((w(i)-w(i-1))/(d(i)-d(i-1)))*(d(1)-d(i-1));
+            max_width_2=W(i-1)+((W(i)-W(i-1))/(d(i)-d(i-1)))*(d(1)-d(i-1));
             max_width_index_2=i-1;
         end
     end
 end
 # Scenario 2: depth at the far bank is lower, adjust near bank
-if d(1)>d(length(w))
-    max_depth=d(length(w));
+if d(1)>d(length(W))
+    max_depth=d(length(W));
     for i=2:min_width_index_1
-        if d(i-1)>d(length(w))&&d(length(w))>d(i)
-            max_width_1=w(i-1)+((w(i)-w(i-1))/(d(i)-d(i-1)))*(d(length(w))-d(i-1));
+        if d(i-1)>d(length(W))&&d(length(W))>d(i)
+            max_width_1=W(i-1)+((W(i)-W(i-1))/(d(i)-d(i-1)))*(d(length(W))-d(i-1));
             max_width_index_1=i;
         end
     end
@@ -108,9 +99,9 @@ plot([max_width_1 max_width_2],[max_depth max_depth],'-r');
 # Generate width-to-depth function by determination of the widths at each
 # change of bank-slope.
 for i=(max_width_index_1):(min_width_index_1-1)
-    for j=min_width_index_2+1:(length(w))
+    for j=min_width_index_2+1:(length(W))
         if (d(j-1)<d(i))&&(d(i)<d(j))
-            new_far(i-max_width_index_1+1,1)=w(j-1)+(d(i)-d(j-1))*(w(j)-w(j-1))/(d(j)-d(j-1));
+            new_far(i-max_width_index_1+1,1)=W(j-1)+(d(i)-d(j-1))*(W(j)-W(j-1))/(d(j)-d(j-1));
             new_far(i-max_width_index_1+1,2)=d(i);
         end
     end
@@ -120,25 +111,19 @@ new_far(min_width_index_1,2)=min_depth;
 for i=min_width_index_2+1:max_width_index_2
     for j=2:min_width_index_1
         if (d(j-1)>d(i))&&(d(i)>d(j))
-            new_near(i-min_width_index_2,1)=w(j-1)+(d(i)-d(j-1))*(w(j)-w(j-1))/(d(j)-d(j-1));
+            new_near(i-min_width_index_2,1)=W(j-1)+(d(i)-d(j-1))*(W(j)-W(j-1))/(d(j)-d(j-1));
             new_near(i-min_width_index_2,2)=d(i);
         end
     end
 end
 new_near(max_width_index_2+1-min_width_index_2,1)=min_width_1;
 new_near(max_width_index_2+1-min_width_index_2,2)=min_depth;
-plot(w,d,'ob');
+plot(W,d,'ob');
 plot(new_near(:,1),new_near(:,2),'xg');
 plot(new_far(:,1),new_far(:,2),'xg');
 
-# Assemble the bank positions to be used for widths. Possibly make a datafram with all d, w, new near, new far
-#Preious code goes along near bank and places a point horizontally along the far bank, so that at every point there is a corresponding point
-#then goes doen the far bank and does the same. 
-#Finds a width at many places along the transect bw two matching endpoints (horizontlally) so we have a width for each end
-#w,d was the original set of points, new_near is the new set of points on the near bank, new far is the new ones on the ffar bank
-#Sorts those by W (their location along the transect in order)
-#[w d means make a new array of W, d, then mutate for new_near, then mutate for new_far]
-temp=[w d;new_near;new_far];
+# Assemble the bank positions to be used for widths.
+temp=[W d;new_near;new_far];
 temp=sortrows(temp);
 head=0; foot=0;
 for i=1:length(temp)

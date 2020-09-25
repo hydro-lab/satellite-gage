@@ -205,9 +205,9 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){
     }
     R_H=area/wp;
     n=area*(R_H^(2/3))*(S_0^(1/2))/calibration_discharge;
-    else
+    }else{
         disp('calibration failed');
-}
+        }
 
 #f=fopen(specs,'a');
 #fprintf(f,'Calibration File\n');
@@ -230,9 +230,9 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){
 
 [date,wid]=textread(widths,'%s %f','headerlines',widths_headerlines);
 q=zeros(length(wid),1);
-fo=fopen(data,'a');
-fprintf(fo,'width, area, hydraulic_radius, discharge\n');
-fprintf(fo,'(m), (m^2), (m), (m^3s^-1)\n');
+#fo=fopen(data,'a');
+#fprintf(fo,'width, area, hydraulic_radius, discharge\n');
+#fprintf(fo,'(m), (m^2), (m), (m^3s^-1)\n');
 for (k in 1:(length(wid))){
     for (i in 2:length(levels)){
         if ((levels(i-1,4)>wid(k))&&(wid(k)>=levels(i,4))){

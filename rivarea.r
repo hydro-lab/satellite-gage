@@ -12,6 +12,11 @@
 # data= flow output file name
 # parameter #calls the above- described file
 setwd("/Users/littlesunsh9/Documents/Kahler Lab/planet_order_181828/")
+
+calibration_discharge <- 3; # cubic meters per second
+calibration_width <- 15; # meters
+S_0 <- 0.0006;
+
 profile <- read.table("bcprofile.txt")
 names(profile)[1] <- "W"
 names(profile)[2] <- "d"
@@ -147,7 +152,7 @@ complet <- rbind(prof, new)
 temp <- complet[order(complet[,1]),]
 
 head=0; foot=0;
-for (i in 1:length(temp)){
+for (i in 1:nrow(temp)){
     if ((temp[i,1])<max_width_1){
         head=head+1;
     }
@@ -178,26 +183,26 @@ for (i in 1:nrow(xsec)){
 # and stored for the numerical integration by the trapazoidal rule and
 # wetted perimeter summation by the distance formula.
 if ((calibration_width>min_width)&&(calibration_width<max_width)){
-    for (i in 2:(length(levels))){
-        if ((levels[i-1,4]>calibration_width)&&(calibration_width>=levels[i,4])){
-            cal_depth=levels[i-1,1]-(levels[i-1,4]-calibration_width)*(levels[i-1,1]-levels[i,1])/(levels[i-1,4]-levels[i,4]);
-            cal_near=levels[i-1,2]-(levels[i-1,4]-calibration_width)*(levels[i-1,2]-levels[i,2])/(levels[i-1,4]-levels[i,4]);
-            cal_far=levels[i-1,3]-(levels[i-1,4]-calibration_width)*(levels[i-1,3]-levels[i,3])/(levels[i-1,4]-levels[i,4]);
-            for (j in 2:length(levels)){
-                if ((xsec[j-1,2]>cal_depth)&&(cal_depth>=xsec[j,2])){
+    for (i in 2:(nrow(levels))){
+        if ((levels[i-1,4]>calibration_width)&(calibration_width>=levels[i,4])){
+            cal_depth=levels[(i-1),1]-(levels[(i-1),4]-calibration_width)*(levels[(i-1),1]-levels[i,1])/(levels[(i-1),4]-levels[i,4]);
+            cal_near=levels[(i-1),2]-(levels[(i-1),4]-calibration_width)*(levels[(i-1),2]-levels[i,2])/(levels[(i-1),4]-levels[i,4]);
+            cal_far=levels[(i-1),3]-(levels[(i-1),4]-calibration_width)*(levels[(i-1),3]-levels[i,3])/(levels[(i-1),4]-levels[i,4]);
+            for (j in 2:nrow(levels)){
+                if ((xsec[(j-1),2]>cal_depth)&(cal_depth>=xsec[j,2])){
                     near=j;
                 }
             }
-            for (j in (length(xsec)-length(levels)+1):length(xsec)){
-                if ((xsec[j-1,2]<=cal_depth)&&(cal_depth<xsec[j,2])){
+            for (j in (near+1):nrow(xsec)){
+                if ((xsec[(j-1),2]<=cal_depth)&(cal_depth<xsec[j,2])){
                     far=j-1;
                 }
             }
-            area=(xsec[near,1]-cal_near)*(cal_depth-xsec[near,2])/2;
-            wp=((xsec[near,1]-cal_near)^2+(cal_depth-xsec[near,2])^2)^(1/2);
+            area=(xsec[near,1]-cal_near)*(cal_depth-xsec[near,2])/2;#double check area
+            wp=(((xsec[near,1]-cal_near)^2)+(cal_depth-xsec[near,2])^2)^(1/2);
             for (j in near:(far-1)){
-                area=area+(xsec[j+1,1]-xsec[j,1])*((cal_depth-xsec[j+1,2])+(cal_depth-xsec[j,2]))/2;
-                wp=wp+((xsec[j+1,1]-xsec[j,1])^2+(xsec[j+1,2]-xsec[j,2])^2)^(1/2);
+                area=area+(xsec[(j+1),1]-xsec[j,1])*((cal_depth-xsec[(j+1),2])+(cal_depth-xsec[j,2]))/2;
+                wp=wp+((xsec[(j+1),1]-xsec[j,1])^2+(xsec[(j+1),2]-xsec[j,2])^2)^(1/2);
             }
             area=area+(cal_far-xsec[far,1])*(cal_depth-xsec[far,2])/2;
             wp=wp+((cal_far-xsec[far,1])^2+((cal_depth-xsec[far,2])^2)^(1/2));
@@ -206,7 +211,7 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){
     R_H=area/wp;
     n=area*(R_H^(2/3))*(S_0^(1/2))/calibration_discharge;
     }else{
-        disp('calibration failed');
+        print("calibration failed")
         }
 
 #f=fopen(specs,'a');
@@ -228,26 +233,33 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){
 # wetted perimeter, hydraulic radius, and discharge will be output in the
 # exact same order as the input widths.
 
+
+#wide <- read.table(width.csv)
+#wid <- wide[1,6]
+
+
 # Matlab: [date,wid]=textread(widths,'%s %f','headerlines',widths_headerlines);
-dat <- read.table("width.csv", header = FALSE, sep = ",", dec = ".")
-# now, the data is in a dataframe called dat.
-q=zeros(length(wid),1);
+wid <- read.table("width.csv", header = TRUE, sep = ",", dec = ".")
+# now, the data is in a dataframe called wid.
+
+#[date,wid]=textread(widths,'%s %f','headerlines',widths_headerlines);
+q <- array(0, dim = c(nrow(wid),1))
 #fo=fopen(data,'a');
 #fprintf(fo,'width, area, hydraulic_radius, discharge\n');
 #fprintf(fo,'(m), (m^2), (m), (m^3s^-1)\n');
-for (k in 1:(length(wid))){
-    for (i in 2:length(levels)){
-        if ((levels(i-1,4)>wid(k))&&(wid(k)>=levels(i,4))){
-            wid_depth=levels(i-1,1)-(levels(i-1,4)-wid(k))*(levels(i-1,1)-levels(i,1))/(levels(i-1,4)-levels(i,4));
-            wid_near=levels(i-1,2)-(levels(i-1,4)-wid(k))*(levels(i-1,2)-levels(i,2))/(levels(i-1,4)-levels(i,4));
-            wid_far=levels(i-1,3)-(levels(i-1,4)-wid(k))*(levels(i-1,3)-levels(i,3))/(levels(i-1,4)-levels(i,4));
-            for (j in 2:length(levels)){
-                if ((xsec(j-1,2)>wid_depth)&&(wid_depth>=xsec(j,2))){
+for (k in 1:(nrow(wid))){
+    for (i in 2:nrow(levels)){
+        if ((levels[(i-1),4]>wid$width_m[k])&(wid$width_m[k]>=levels[i,4])){
+            wid_depth=levels[i-1,1]-(levels[i-1,4]-wid$width_m[k])*(levels[i-1,1]-levels[i,1])/(levels[i-1,4]-levels[i,4]);
+            wid_near=levels[i-1,2]-(levels[i-1,4]-wid$width_m[k])*(levels[i-1,2]-levels[i,2])/(levels[i-1,4]-levels[i,4]);
+            wid_far=levels[i-1,3]-(levels[i-1,4]-wid$width_m[k])*(levels[i-1,3]-levels[i,3])/(levels[i-1,4]-levels[i,4]);
+            for (j in 2:nrow(levels)){
+                if ((xsec[j-1,2]>wid_depth)&(wid_depth>=xsec[j,2])){
                     near=j;
                 }
             }
-            for (j in (length(xsec)-length(levels)+1):length(xsec)){
-                if ((xsec[j-1,2]<=wid_depth)&&(wid_depth<xsec[j,2])){
+            for (j in (near+1):nrow(xsec)){
+                if ((xsec[(j-1),2]<=wid_depth)&(wid_depth<xsec[j,2])){
                     far=j-1;
                 }
             }
@@ -263,17 +275,17 @@ for (k in 1:(length(wid))){
     }
     R_H=area/wp;
     Q=area*(R_H^(2/3))*(S_0^(1/2))/n;
-    if (wid(k)<min_width){
+    if (wid$width_m[k]<min_width){
         R_H=-8;
         area=-8;
         Q=-8;
     }
-    if (wid(k)>max_width){
+    if (wid$width_m[k]>max_width){
         R_H=-9;
         area=-9;
         Q=-9;
     }
-    q(k,1)=Q;
+    q[k,1]=Q;
     # fprintf(fo,'%10.3f, %10.3f, %10.3f, %10.3f\n',wid(k),area,R_H,Q);
 }
 #fclose(fo);

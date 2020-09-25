@@ -228,7 +228,9 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){
 # wetted perimeter, hydraulic radius, and discharge will be output in the
 # exact same order as the input widths.
 
-[date,wid]=textread(widths,'%s %f','headerlines',widths_headerlines);
+# Matlab: [date,wid]=textread(widths,'%s %f','headerlines',widths_headerlines);
+dat <- read.table("width.csv", header = FALSE, sep = ",", dec = ".")
+# now, the data is in a dataframe called dat.
 q=zeros(length(wid),1);
 #fo=fopen(data,'a');
 #fprintf(fo,'width, area, hydraulic_radius, discharge\n');

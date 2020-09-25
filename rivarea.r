@@ -188,7 +188,7 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){
                     near=j;
                 }
             }
-            for (j in (length(xsec)-length(levels)+1):length(xsec){
+            for (j in (length(xsec)-length(levels)+1):length(xsec)){
                 if ((xsec[j-1,2]<=cal_depth)&&(cal_depth<xsec[j,2])){
                     far=j-1;
                 }
@@ -199,8 +199,8 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){
                 area=area+(xsec[j+1,1]-xsec[j,1])*((cal_depth-xsec[j+1,2])+(cal_depth-xsec[j,2]))/2;
                 wp=wp+((xsec[j+1,1]-xsec[j,1])^2+(xsec[j+1,2]-xsec[j,2])^2)^(1/2);
             }
-            area=area+(cal_far-xsec(far,1))*(cal_depth-xsec(far,2))/2;
-            wp=wp+((cal_far-xsec(far,1))^2+(cal_depth-xsec(far,2))^2)^(1/2);
+            area=area+(cal_far-xsec[far,1])*(cal_depth-xsec[far,2])/2;
+            wp=wp+((cal_far-xsec[far,1])^2+((cal_depth-xsec[far,2])^2)^(1/2));
         }
     }
     R_H=area/wp;
@@ -208,6 +208,7 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){
     else
         disp('calibration failed');
 }
+
 #f=fopen(specs,'a');
 #fprintf(f,'Calibration File\n');
 #fprintf(f,'Cross-sectional area at calibration, A=%10.3f\n',area);
@@ -232,7 +233,7 @@ q=zeros(length(wid),1);
 fo=fopen(data,'a');
 fprintf(fo,'width, area, hydraulic_radius, discharge\n');
 fprintf(fo,'(m), (m^2), (m), (m^3s^-1)\n');
-for (k in 1:(length(wid)){
+for (k in 1:(length(wid))){
     for (i in 2:length(levels)){
         if ((levels(i-1,4)>wid(k))&&(wid(k)>=levels(i,4))){
             wid_depth=levels(i-1,1)-(levels(i-1,4)-wid(k))*(levels(i-1,1)-levels(i,1))/(levels(i-1,4)-levels(i,4));
@@ -244,18 +245,18 @@ for (k in 1:(length(wid)){
                 }
             }
             for (j in (length(xsec)-length(levels)+1):length(xsec)){
-                if (xsec(j-1,2)<=wid_depth)&&(wid_depth<xsec(j,2)){
+                if ((xsec[j-1,2]<=wid_depth)&&(wid_depth<xsec[j,2])){
                     far=j-1;
                 }
             }
-            area=(xsec(near,1)-cal_near)*(wid_depth-xsec(near,2))/2;
-            wp=((xsec(near,1)-cal_near)^2+(wid_depth-xsec(near,2))^2)^(1/2);
+            area=(xsec[near,1]-cal_near)*(wid_depth-xsec[near,2])/2;
+            wp=((xsec[near,1]-cal_near)^2+(wid_depth-xsec[near,2])^2)^(1/2);
             for (j in near:(far-1)){
-                area=area+(xsec(j+1,1)-xsec(j,1))*((wid_depth-xsec(j+1,2))+(wid_depth-xsec(j,2)))/2;
-                wp=wp+((xsec(j+1,1)-xsec(j,1))^2+(xsec(j+1,2)-xsec(j,2))^2)^(1/2);
+                area <- area+(xsec[j+1,1]-xsec[j,1])*((wid_depth-xsec[j+1,2])+(wid_depth-xsec[j,2]))/2;
+                wp <- wp+((xsec[j+1,1]-xsec[j,1])^2+(xsec[j+1,2]-xsec[j,2])^2)^(1/2);
             }
-            area=area+(wid_far-xsec(far,1))*(wid_depth-xsec(far,2))/2;
-            wp=wp+((wid_far-xsec(far,1))^2+(wid_depth-xsec(far,2))^2)^(1/2);
+            area <- area+((wid_far-xsec[far,1])*(wid_depth-xsec[far,2])/2);
+            wp <- wp+((wid_far-xsec[far,1])^2+(wid_depth-xsec[far,2])^2)^(1/2);
         }
     }
     R_H=area/wp;
@@ -265,7 +266,7 @@ for (k in 1:(length(wid)){
         area=-8;
         Q=-8;
     }
-    if wid(k)>max_width{
+    if (wid(k)>max_width){
         R_H=-9;
         area=-9;
         Q=-9;
@@ -274,4 +275,3 @@ for (k in 1:(length(wid)){
     # fprintf(fo,'%10.3f, %10.3f, %10.3f, %10.3f\n',wid(k),area,R_H,Q);
 }
 #fclose(fo);
-    

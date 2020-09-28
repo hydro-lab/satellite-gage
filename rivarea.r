@@ -10,7 +10,8 @@
 # number of headerlines
 # specs= specifications output file name
 # data= flow output file name
-# parameter #calls the above- described file
+
+
 setwd("/Users/littlesunsh9/Documents/Kahler Lab/planet_order_181828/")
 
 calibration_discharge <- 3; # cubic meters per second
@@ -28,6 +29,8 @@ d <- profile$d
 # positive depths (i.e., orientation of the vertical coordinate).  This
 # corrects the values to be negative heights for this analysis
 
+specs <- array(-9, dim=c(1, 7))
+
 if (mean(d)>0){
     d = -d
     profile$d = -profile$d
@@ -43,6 +46,7 @@ plot(profile, type = "p", main="Bathymetric Profile",
 # Find any irregularities in the bathymetry.  This searches the depths to
 # find the heighest peak in the bathymetry and sets the lowest depth value.
 min_depth <- min(d);
+specs[q,5] <- min_depth
 for (i in 2:(length(W)-1)){
     if ((d[i]>min_depth)&(d[i-1]<d[i])&(d[i]>d[i+1])){
         min_depth=d[i];
@@ -63,18 +67,24 @@ for (i in (min_depth_index+2):(length(W))){
         min_width_index_2=i-1;
     }
 }
-#plot(x = (min_width_1 min_depth), y = (min_width_2 min_depth) );
+
+# plot(profile, type = "p", main="Bathymetric Profile", 
+#      xlab= "Cross-stream-distance (m)" ,
+#      ylab ="Depth (m)") # Check units
+# point(x = min_width_1, y = min_depth, type = "p", pch = 21);
+# point(x = min_width_2, y = min_depth, type = "p", pch = 21);
+
+
 min_width <- (min_width_2-min_width_1);
-#plot(profile, type = "p", main="Bathymetric Profile", 
-#  xlab= "Cross-stream-distance (m)" ,
-#  ylab ="Depth (m)") # Check units
+specs[q,4] <- min_width
 # min_width_index_1 is the first point below floor from the near bank
-# min_width_index_1 is the first point below floor from the far bank
+# min_width_index_2 is the first point below floor from the far bank
 
 # Find the endpoints of the highest stage possible in analysis.
 max_width_1=W[1];
 max_width_2=W[length(W)];
 max_depth <- d[1];
+specs[q,7] <- max_depth
 max_width_index_1 <- 1;
 max_width_index_2 <- length(W);
 # In the event that the endpoints do not reach the same datum:
@@ -107,7 +117,7 @@ if (d[1]>(d[length(W)])){
 }
 
 max_width = max_width_2-max_width_1;
-#lines([max_width_1 max_width_2],[max_depth max_depth]);
+specs[q,6] <- max_width
 
 # max_width_index_1 is the first point from the near bank that maps to far
 # max_width_index_2 is the first point from the far bank that maps to near
@@ -206,25 +216,29 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){
             }
             area=area+(cal_far-xsec[far,1])*(cal_depth-xsec[far,2])/2;
             wp=wp+((cal_far-xsec[far,1])^2+((cal_depth-xsec[far,2])^2)^(1/2));
-        }
+            specs[q,1] <- area
+            }
     }
     R_H=area/wp;
     n=area*(R_H^(2/3))*(S_0^(1/2))/calibration_discharge;
+    
+    specs[q,2] <- R_H
+    specs[q,3] <- n
     }else{
         print("calibration failed")
         }
 
-#f=fopen(specs,'a');
-#fprintf(f,'Calibration File\n');
-#fprintf(f,'Cross-sectional area at calibration, A=%10.3f\n',area);
-#fprintf(f,'Hydraulic radius at calibration, R_{H}=%10.3f\n',R_H);
-#fprintf(f,'Friction factor (Manning), n=%6.4f\n',n);
-# fprintf(f,'Minimum allowable width:      %8.4f\n',min_width);
-# fprintf(f,'Minimum corresponding depth:  %8.4f\n',min_depth);
-# fprintf(f,'Maximum allowable width:      %8.4f\n',max_width);
-# fprintf(f,'Maximum corresponding depth:  %8.4f\n',max_depth);
-# fprintf(f,'In results file, flag: -8 and -9 indicate too small or large width, respectively');
-# fclose(f);
+specifications <- data.frame(specs)
+
+names(specifications)[1] <- "Cross-sectional area at calibration"
+names(specifications)[2] <- "Hydraulic radius at calibration"
+names(specifications)[3] <- "Friction factor (Manning)"
+names(specifications)[4] <- "Minimum allowable width:"
+names(specifications)[5] <- "Minimum corresponding depth"
+names(specifications)[6] <- "Maximum allowable width:"
+names(specifications)[7] <- "Maximum corresponding depth:"
+
+write.table(specs, file = "calibrationfile.csv", append = TRUE, sep = ",", dec = ".", row.names = FALSE, col.names = TRUE)
 
 # WIDTHS
 # Prepare a text file with the date, in a format without spaces, in the
@@ -233,20 +247,12 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){
 # wetted perimeter, hydraulic radius, and discharge will be output in the
 # exact same order as the input widths.
 
-
-#wide <- read.table(width.csv)
-#wid <- wide[1,6]
-
-
-# Matlab: [date,wid]=textread(widths,'%s %f','headerlines',widths_headerlines);
 wid <- read.table("width.csv", header = TRUE, sep = ",", dec = ".")
 # now, the data is in a dataframe called wid.
 
-#[date,wid]=textread(widths,'%s %f','headerlines',widths_headerlines);
+
 q <- array(0, dim = c(nrow(wid),1))
-#fo=fopen(data,'a');
-#fprintf(fo,'width, area, hydraulic_radius, discharge\n');
-#fprintf(fo,'(m), (m^2), (m), (m^3s^-1)\n');
+
 for (k in 1:(nrow(wid))){
     for (i in 2:nrow(levels)){
         if ((levels[(i-1),4]>wid$width_m[k])&(wid$width_m[k]>=levels[i,4])){
@@ -286,6 +292,8 @@ for (k in 1:(nrow(wid))){
         Q=-9;
     }
     q[k,1]=Q;
-    # fprintf(fo,'%10.3f, %10.3f, %10.3f, %10.3f\n',wid(k),area,R_H,Q);
+
 }
-#fclose(fo);
+
+
+

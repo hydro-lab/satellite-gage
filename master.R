@@ -52,6 +52,7 @@ for (q in 1:(length(im))){
   #crs(e) <- "+proj=longlat +datum=WGS84 +no_defs"
   crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
   r <- crop(pic, e)
+  # rm(pic) # remove rest of image from RAM
   
   #options(stringsAsFactors = FALSE)
   

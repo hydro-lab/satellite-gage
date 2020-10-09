@@ -182,8 +182,8 @@ q <- array(0, dim = c(nrow(wid),1))
 #fo=fopen(data,'a');
 #fprintf(fo,'width, area, hydraulic_radius, discharge\n');
 #fprintf(fo,'(m), (m^2), (m), (m^3s^-1)\n');
-for (k in 1:(nrow(wid))){
-    for (i in 2:nrow(levels)){
+for (k in 1:(nrow(wid))){ # k loops around all of the image/days
+    for (i in 2:nrow(levels)){ # i loops through the bathymetry points
         if ((levels[(i-1),4]>wid$width_m[k])&(wid$width_m[k]>=levels[i,4])){
             wid_depth=levels[i-1,1]-(levels[i-1,4]-wid$width_m[k])*(levels[i-1,1]-levels[i,1])/(levels[i-1,4]-levels[i,4]);
             wid_near=levels[i-1,2]-(levels[i-1,4]-wid$width_m[k])*(levels[i-1,2]-levels[i,2])/(levels[i-1,4]-levels[i,4]);

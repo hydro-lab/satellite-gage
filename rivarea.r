@@ -36,7 +36,9 @@ for (i in 2:(length(W)-1)){
 }
 
 # Find the endpoints of the lowest stage possible in analysis.
+min_width_1 <- W[min_depth_index]
 min_width_index_1 <- min_depth_index
+min_width_2 <- W[min_depth_index]
 min_width_index_2 <- min_depth_index # in case the min width is zero and the depth corresponds to a single point.
 for (i in 2:(min_depth_index)){
     if ((d[i-1]>=min_depth)&(min_depth>d[i])){

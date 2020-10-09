@@ -176,7 +176,7 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){
 }
 
 # now, the data is in a dataframe called wid.
-dataout <- array(-9, dim=c(nrow(wid), 4))
+dataout <- array(-9, dim=c(nrow(wid), 3))
 #[date,wid]=textread(widths,'%s %f','headerlines',widths_headerlines);
 q <- array(0, dim = c(nrow(wid),1))
 #fo=fopen(data,'a');
@@ -206,7 +206,7 @@ for (k in 1:(nrow(wid))){
             }
             area <- area+((wid_far-xsec[far,1])*(wid_depth-xsec[far,2])/2);
             wp <- wp+((wid_far-xsec[far,1])^2+(wid_depth-xsec[far,2])^2)^(1/2);
-            #dataout[i,2] <- area
+            dataout[k,1] <- area
              }
     }
     R_H=area/wp;
@@ -223,9 +223,9 @@ for (k in 1:(nrow(wid))){
     }
     
     q[k,1]=Q; 
-   # dataout[k,1] <- (wid$width_m)
-   # dataout[k,3] <- R_H
-    #dataout[k,4] <- q
+   dataout[k,2] <- (wid$width_m[k])
+   dataout[k,3] <- R_H
+
     # wid(k),area,R_H,Q);
 }
 
@@ -245,9 +245,9 @@ names(specs)[5] <- "Minimum corresponding depth"
 names(specs)[6] <- "Maximum allowable width"
 names(specs)[7] <- "Maximum corresponding depth"
 
-flowoutput <- data.frame(dataout)
-names(flowoutput)[1] <- "Width"
-names(flowoutput)[2] <- "Cross-sectional area at calibration"
+flowoutput <- data.frame(dataout, q)
+names(flowoutput)[1] <- "Cross-sectional area at calibration"
+names(flowoutput)[2] <- "Width"
 names(flowoutput)[3] <- "Hydraulic radius"
 names(flowoutput)[4] <- "Flow (Q)"
 

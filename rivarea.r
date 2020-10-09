@@ -22,11 +22,16 @@ plot(profile, type = "p", main="Bathymetric Profile",
      ylab ="Depth (m)") # Check units
 
 min_depth <- min(d);
+for (i in 1:(length(W))) {
+      if (d[i] == min_depth) {
+            min_depth_index <- i # added this loop first in case there is no min-depth other than the actual minimum -- need the index.
+      }
+}
 
 for (i in 2:(length(W)-1)){
     if ((d[i]>min_depth)&(d[i-1]<d[i])&(d[i]>d[i+1])){
-        min_depth=d[i];
-        min_depth_index=i;
+        min_depth <- d[i]
+        min_depth_index <- i
     }
 }
 

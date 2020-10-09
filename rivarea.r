@@ -1,19 +1,4 @@
-# This method depends on the parameterization of Manning's equation.  
-# Prepare a text file that contains the following
-# variable definitions:
-# calibration_discharge= THE MEASURED DISCHARGE
-# calibration_width= THE MEASURED WIDTH
-# S_0= THE MEASURED STREAMWISE SLOPE
-# profile= THE FILENAME FOR THE CROSS-SECTIONAL PROFILE (desc. below)
-# number of headerlines
-# widths= THE FILENAME FOR THE WIDTH DATA (desc. below)
-# number of headerlines
-# specs= specifications output file name
-# data= flow output file name
-
-
 setwd("/Users/littlesunsh9/Documents/Kahler Lab/planet_order_181828/")
-
 calibration_discharge <- 3; # cubic meters per second
 calibration_width <- 15; # meters
 S_0 <- 0.0006;
@@ -25,11 +10,7 @@ names(profile)[2] <- "d"
 W <- profile$W
 d <- profile$d
 
-# This tests to determine if the depths are input as negative heights or
-# positive depths (i.e., orientation of the vertical coordinate).  This
-# corrects the values to be negative heights for this analysis
-
-specs <- array(-9, dim=c(1, 7))
+wid <- read.table("width.csv", header = TRUE, sep = ",", dec = ".")
 
 if (mean(d)>0){
     d = -d
@@ -40,13 +21,8 @@ plot(profile, type = "p", main="Bathymetric Profile",
      xlab= "Cross-stream-distance (m)" ,
      ylab ="Depth (m)") # Check units
 
-# The river bank at the lower cross-stream-distance will be referred to as
-# the near bank and the higher cross-stream-distance will be referred to
-# as the far bank.
-# Find any irregularities in the bathymetry.  This searches the depths to
-# find the heighest peak in the bathymetry and sets the lowest depth value.
 min_depth <- min(d);
-specs[q,5] <- min_depth
+
 for (i in 2:(length(W)-1)){
     if ((d[i]>min_depth)&(d[i-1]<d[i])&(d[i]>d[i+1])){
         min_depth=d[i];
@@ -68,27 +44,16 @@ for (i in (min_depth_index+2):(length(W))){
     }
 }
 
-# plot(profile, type = "p", main="Bathymetric Profile", 
-#      xlab= "Cross-stream-distance (m)" ,
-#      ylab ="Depth (m)") # Check units
-# point(x = min_width_1, y = min_depth, type = "p", pch = 21);
-# point(x = min_width_2, y = min_depth, type = "p", pch = 21);
-
 
 min_width <- (min_width_2-min_width_1);
-specs[q,4] <- min_width
-# min_width_index_1 is the first point below floor from the near bank
-# min_width_index_2 is the first point below floor from the far bank
 
-# Find the endpoints of the highest stage possible in analysis.
 max_width_1=W[1];
 max_width_2=W[length(W)];
 max_depth <- d[1];
-specs[q,7] <- max_depth
+
 max_width_index_1 <- 1;
 max_width_index_2 <- length(W);
-# In the event that the endpoints do not reach the same datum:
-# Scenario 1: depth at near bank is lower, adjust far bank
+
 
 for (i in (min_depth_index+2):(length(W))){
     if ((d[i-1]<min_depth)&(min_depth<d[i])){
@@ -117,16 +82,10 @@ if (d[1]>(d[length(W)])){
 }
 
 max_width = max_width_2-max_width_1;
-specs[q,6] <- max_width
-
-# max_width_index_1 is the first point from the near bank that maps to far
-# max_width_index_2 is the first point from the far bank that maps to near
 
 new_far <- array(-9999, dim = c(((min_width_index_1)-(max_width_index_1)+1),2))
 new_near <- array(-9999, dim = c(((max_width_index_2)-(min_width_index_2)+1),2))
 
-# Generate width-to-depth function by determination of the widths at each
-# change of bank-slope.
 for (i in (max_width_index_1):(min_width_index_1-1)){
     for (j in ((min_width_index_2+1):(length(W)))){
         if (((d[j-1]<d[i]))&((d[i]<d[j]))){
@@ -149,12 +108,6 @@ for (i in ((min_width_index_2+1):max_width_index_2)){
 
 new_near[max_width_index_2+1-min_width_index_2,1] <- min_width_1;
 new_near[max_width_index_2+1-min_width_index_2,2] <- min_depth;
-
-#plot(W,d,'ob');
-#plot(new_near(:,1),new_near(:,2),'xg');
-#plot(new_far(:,1),new_far(:,2),'xg');
-
-# Assemble the bank positions to be used for widths.
 
 prof <- cbind(W, d)
 new <- rbind(new_near, new_far)
@@ -188,10 +141,6 @@ for (i in 1:nrow(xsec)){
     }
 }
 
-# Determine area and wetted perimeter for calibration stage: cal_ variables
-# are computed and the next lower indeces, near and far, are searched for
-# and stored for the numerical integration by the trapazoidal rule and
-# wetted perimeter summation by the distance formula.
 if ((calibration_width>min_width)&&(calibration_width<max_width)){
     for (i in 2:(nrow(levels))){
         if ((levels[i-1,4]>calibration_width)&(calibration_width>=levels[i,4])){
@@ -216,43 +165,23 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){
             }
             area=area+(cal_far-xsec[far,1])*(cal_depth-xsec[far,2])/2;
             wp=wp+((cal_far-xsec[far,1])^2+((cal_depth-xsec[far,2])^2)^(1/2));
-            specs[q,1] <- area
-            }
+        }
     }
+
     R_H=area/wp;
     n=area*(R_H^(2/3))*(S_0^(1/2))/calibration_discharge;
     
-    specs[q,2] <- R_H
-    specs[q,3] <- n
-    }else{
-        print("calibration failed")
-        }
+}else{
+    print("calibration failed")
+}
 
-specifications <- data.frame(specs)
-
-names(specifications)[1] <- "Cross-sectional area at calibration"
-names(specifications)[2] <- "Hydraulic radius at calibration"
-names(specifications)[3] <- "Friction factor (Manning)"
-names(specifications)[4] <- "Minimum allowable width:"
-names(specifications)[5] <- "Minimum corresponding depth"
-names(specifications)[6] <- "Maximum allowable width:"
-names(specifications)[7] <- "Maximum corresponding depth:"
-
-write.table(specs, file = "calibrationfile.csv", append = TRUE, sep = ",", dec = ".", row.names = FALSE, col.names = TRUE)
-
-# WIDTHS
-# Prepare a text file with the date, in a format without spaces, in the
-# first column and the cross-stream-distance in the second column.  The
-# date is not used by this program; the computed cross-sectional area,
-# wetted perimeter, hydraulic radius, and discharge will be output in the
-# exact same order as the input widths.
-
-wid <- read.table("width.csv", header = TRUE, sep = ",", dec = ".")
 # now, the data is in a dataframe called wid.
-
-
+dataout <- array(-9, dim=c(nrow(wid), 4))
+#[date,wid]=textread(widths,'%s %f','headerlines',widths_headerlines);
 q <- array(0, dim = c(nrow(wid),1))
-
+#fo=fopen(data,'a');
+#fprintf(fo,'width, area, hydraulic_radius, discharge\n');
+#fprintf(fo,'(m), (m^2), (m), (m^3s^-1)\n');
 for (k in 1:(nrow(wid))){
     for (i in 2:nrow(levels)){
         if ((levels[(i-1),4]>wid$width_m[k])&(wid$width_m[k]>=levels[i,4])){
@@ -277,7 +206,8 @@ for (k in 1:(nrow(wid))){
             }
             area <- area+((wid_far-xsec[far,1])*(wid_depth-xsec[far,2])/2);
             wp <- wp+((wid_far-xsec[far,1])^2+(wid_depth-xsec[far,2])^2)^(1/2);
-        }
+            #dataout[i,2] <- area
+             }
     }
     R_H=area/wp;
     Q=area*(R_H^(2/3))*(S_0^(1/2))/n;
@@ -291,9 +221,35 @@ for (k in 1:(nrow(wid))){
         area=-9;
         Q=-9;
     }
-    q[k,1]=Q;
-
+    
+    q[k,1]=Q; 
+   # dataout[k,1] <- (wid$width_m)
+   # dataout[k,3] <- R_H
+    #dataout[k,4] <- q
+    # wid(k),area,R_H,Q);
 }
 
+Cr <- c(area)
+Hr <- c(R_H)
+Ff <- c(n)
+Miaw <- c(min_width)
+Micd <- c(min_depth)
+Maw <- c(max_width)
+Mcd <- c(max_depth)
+specs <- data.frame(Cr, Hr, Ff, Miaw, Micd, Maw, Mcd)
+names(specs)[1] <- "Cross-sectional area at calibration"
+names(specs)[2] <- "Hydraulic radius at calibration"
+names(specs)[3] <- "Friction factor (Manning)"
+names(specs)[4] <- "Minimum allowable width"
+names(specs)[5] <- "Minimum corresponding depth"
+names(specs)[6] <- "Maximum allowable width"
+names(specs)[7] <- "Maximum corresponding depth"
 
+flowoutput <- data.frame(dataout)
+names(flowoutput)[1] <- "Width"
+names(flowoutput)[2] <- "Cross-sectional area at calibration"
+names(flowoutput)[3] <- "Hydraulic radius"
+names(flowoutput)[4] <- "Flow (Q)"
+
+write.table(flowoutput, file = "flowoutput.csv", append = TRUE, sep = ",", dec = ".", row.names = FALSE, col.names = TRUE)
 

@@ -1,5 +1,7 @@
 #Run in command line as: Rscript master.R
 
+#Current Update is to inclide a check for existance of the crop boundaries in each raster file else skip
+
 # Raster calcultion to crop Geotiff, also pulls XML metadata: reflectance coefficient (ps:reflectanceCoefficient)
 library(rgdal)
 library(raster)

@@ -10,12 +10,12 @@ library(XML)
 library(methods)
 
 # remember to set working directory if needed:
-setwd("/Users/littlesunsh9/Documents/Kahler Lab/planet_order_181828/")
+setwd("/Users/littlesunsh9/Documents/planettestingfolder/")
 #Lists for necessary files
 #Image list
-im <- list.files("/Users/littlesunsh9/Documents/Kahler Lab/planet_order_181828/", pattern = "*AnalyticMS.tif$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
+im <- list.files("/Users/littlesunsh9/Documents/planettestingfolder/", pattern = "*AnalyticMS.tif$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
 #Metadata List
-g <- list.files("/Users/littlesunsh9/Documents/Kahler Lab/planet_order_181828/", pattern = "*AnalyticMS_metadata.xml$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
+g <- list.files("/Users/littlesunsh9/Documents/planettestingfolder/", pattern = "*AnalyticMS_metadata.xml$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
 
 #Inputs from 
 #cald <- 4.3; # calibration discharge (the measured discharge), cubic meters per second

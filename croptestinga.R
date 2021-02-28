@@ -12,6 +12,7 @@ library(sp)
 
 # remember to set working directory if needed:
 setwd("/Users/littlesunsh9/Documents/planettestingfolder/")
+setwd("/Volumes/LaCie/planet/buffalo/")
 #Lists for necessary files
 #Image list
 im <- list.files("/Users/littlesunsh9/Documents/planettestingfolder/", pattern = "*AnalyticMS.tif$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
@@ -36,6 +37,9 @@ prowidths <- array(-9, dim=c(length(im),2)) #creates the output file for the par
 for (q in 1:(length(im))){
     #Import raw Planet metadata
     fn <- g[q]
+    # for testing existance in the workflow
+    fn <- "/Volumes/LaCie/planet/buffalo/exist_testing/20180422_153434_0e20/20180422_153434_0e20_3B_AnalyticMS_metadata.xml"
+    #fn <- "/Volumes/LaCie/planet/buffalo/exist_testing/20180424_074548_1003/20190514_074548_1003_3B_AnalyticMS_metadata.xml"
     fl <- xmlParse(fn)
     rc <- setNames(xmlToDataFrame(node=getNodeSet(fl, "//ps:EarthObservation/gml:resultOf/ps:EarthObservationResult/ps:bandSpecificMetadata/ps:reflectanceCoefficient")),"reflectanceCoefficient")
     dm <- as.matrix(rc)
@@ -48,15 +52,18 @@ for (q in 1:(length(im))){
     
     # Import raster image, crops to chosen extent
     fn <- im[q]
+    fn <- "/Volumes/LaCie/planet/buffalo/exist_testing/20180422_153434_0e20/20180422_153434_0e20_3B_AnalyticMS.tif"
+    fn <- "/Volumes/LaCie/planet/buffalo/exist_testing/20180424_074548_1003/20190514_074548_1003_3B_AnalyticMS.tif"
     pic <- stack(fn)
-    # set extent from QGIS analysis:
+    # set extent from QGIS analysis: !! We need this area for analysis
     # extent format (xmin,xmax,ymin,ymax)
     e <- as(extent(609555.5999,609709.1999,4507753.099,4507867.5999 ), 'SpatialPolygons')
     #crs(e) <- "+proj=longlat +datum=WGS84 +no_defs"
     crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
-    for (q in 1:(length(pic))){
-        if 
-    }
+    # Set extent from the Planet file !! This is the area from the picture
+    test <- as(extent(pic), 'SpatialPolygons')
+    crs(test) <- "+proj=utm +zone=17 +datum=WGS84"
+    if (gWithin(e, test, byid = FALSE)) {
     r <- crop(pic, e)
     # rm(pic) # remove rest of image from RAM
     
@@ -83,6 +90,7 @@ for (q in 1:(length(im))){
                 format = "GTiff", # save as a tif
                 # save as a FLOAT if not default, not integer
                 overwrite = TRUE)  # OPTIONAL - be careful. This will OVERWRITE previous files.
+    }
 }
 
 

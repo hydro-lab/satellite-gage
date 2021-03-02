@@ -8,14 +8,15 @@ library(raster)
 library(rgeos)
 library(XML)
 library(methods)
+library(sp)
 
 # remember to set working directory if needed:
-setwd("/Users/littlesunsh9/Documents/planettestingfolder/")
+setwd("/Volumes/LaCie2big/Planet/Buffalo_Creek/planet_order_323571/")
 #Lists for necessary files
 #Image list
-im <- list.files("/Users/littlesunsh9/Documents/planettestingfolder/", pattern = "*AnalyticMS.tif$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
+im <- list.files("/Volumes/LaCie2big/Planet/Buffalo_Creek/planet_order_323571/", pattern = "*AnalyticMS.tif$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
 #Metadata List
-g <- list.files("/Users/littlesunsh9/Documents/planettestingfolder/", pattern = "*AnalyticMS_metadata.xml$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
+g <- list.files("/Volumes/LaCie2big/Planet/Buffalo_Creek/planet_order_323571/", pattern = "*AnalyticMS_metadata.xml$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
 
 #Inputs from 
 #cald <- 4.3; # calibration discharge (the measured discharge), cubic meters per second
@@ -53,33 +54,38 @@ for (q in 1:(length(im))){
   e <- as(extent(609555.5999,609709.1999,4507753.099,4507867.5999 ), 'SpatialPolygons')
   #crs(e) <- "+proj=longlat +datum=WGS84 +no_defs"
   crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
-  r <- crop(pic, e)
-  # rm(pic) # remove rest of image from RAM
-  
-  #options(stringsAsFactors = FALSE)
-  
-  rbrick <- brick(r)
-  # calculate normalized difference water index (NDWI).  :
-  # calculate NDWI using the green (band 2) and nir (band 4) bands
-  ndwi <- ((rc2*r[[2]]) - (rc4*r[[4]])) / ((rc2*r[[2]]) + (rc4*r[[4]]))
-  # This formulation follows: Gao, B. (1996). NDWI—A normalized difference water index for remote sensing of vegetation liquid water from space. Remote Sensing of Environment, 53(3), p. 257-266. https://www.sciencedirect.com/science/article/abs/pii/S0034425796000673
-  
-  # To view, during development:
-  #plot(ndwi)
-  
-  # To export cropped NDWI as a new file and create filename root
-  p <- strsplit(im[q], "_3B_AnalyticMS.tif")
-  r <- strsplit(p[[1]], "/")
-  lr <- tolower(r[[1]])
-  len <- length(lr)
-  root <- lr[[len]]
-  
-  writeRaster(x = ndwi,
-              filename= paste(root, "cndwi.tif", sep="."),
-              format = "GTiff", # save as a tif
-              # save as a FLOAT if not default, not integer
-              overwrite = TRUE)  # OPTIONAL - be careful. This will OVERWRITE previous files.
-  
+  crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
+  # Set extent from the Planet file !! This is the area from the picture
+  test <- as(extent(pic), 'SpatialPolygons')
+  crs(test) <- "+proj=utm +zone=17 +datum=WGS84"
+  if (gWithin(e, test, byid = FALSE)) {
+    r <- crop(pic, e)
+    # rm(pic) # remove rest of image from RAM
+    
+    #options(stringsAsFactors = FALSE)
+    
+    rbrick <- brick(r)
+    # calculate normalized difference water index (NDWI).  :
+    # calculate NDWI using the green (band 2) and nir (band 4) bands
+    ndwi <- ((rc2*r[[2]]) - (rc4*r[[4]])) / ((rc2*r[[2]]) + (rc4*r[[4]]))
+    # This formulation follows: Gao, B. (1996). NDWI—A normalized difference water index for remote sensing of vegetation liquid water from space. Remote Sensing of Environment, 53(3), p. 257-266. https://www.sciencedirect.com/science/article/abs/pii/S0034425796000673
+    
+    # To view, during development:
+    #plot(ndwi)
+    
+    # To export cropped NDWI as a new file and create filename root
+    p <- strsplit(im[q], "_3B_AnalyticMS.tif")
+    r <- strsplit(p[[1]], "/")
+    lr <- tolower(r[[1]])
+    len <- length(lr)
+    root <- lr[[len]]
+    
+    writeRaster(x = ndwi,
+                filename= paste(root, "cndwi.tif", sep="."),
+                format = "GTiff", # save as a tif
+                # save as a FLOAT if not default, not integer
+                overwrite = TRUE)  # OPTIONAL - be careful. This will OVERWRITE previous files.
+  }
   #attempting the following crop procedure https://gis.stackexchange.com/questions/229356/crop-a-raster-file-in-r
   #attempting the following NDVI as NDWI procedure https://www.earthdatascience.org/courses/earth-analytics/multispectral-remote-sensing-data/vegetation-indices-NDVI-in-R/
   

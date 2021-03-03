@@ -10,13 +10,16 @@ library(XML)
 library(methods)
 library(sp)
 
+rm(im,g)
+rm(list=ls())
+
 # remember to set working directory if needed:
-setwd("/Volumes/LaCie2big/Planet/Buffalo_Creek/planet_order_323571/")
+setwd("/Volumes/LaCie2big/BCAnalytic/2017/")
 #Lists for necessary files
 #Image list
-im <- list.files("/Volumes/LaCie2big/Planet/Buffalo_Creek/planet_order_323571/", pattern = "*AnalyticMS.tif$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
+im <- list.files("/Volumes/LaCie2big/BCAnalytic/2017/", pattern = "*AnalyticMS.tif$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
 #Metadata List
-g <- list.files("/Volumes/LaCie2big/Planet/Buffalo_Creek/planet_order_323571/", pattern = "*AnalyticMS_metadata.xml$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
+g <- list.files("/Volumes/LaCie2big/BCAnalytic/2017/", pattern = "*AnalyticMS_metadata.xml$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
 
 #Inputs from 
 #cald <- 4.3; # calibration discharge (the measured discharge), cubic meters per second
@@ -320,3 +323,4 @@ write.table(prowidths, file = "widths.txt", append = TRUE, sep = ",", dec = ".",
 # r -f peaktest.r
 # make sure input and output filenames are coded correctly
 # https://cran.r-project.org/doc/manuals/R-intro.html#Invoking-R-from-the-command-line
+

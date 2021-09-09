@@ -2,7 +2,7 @@
 library(lubridate)
 library(readr)
 
-im <- list.files("/Volumes/LaCie2big/BCAnalytic/2017/", 
+im <- list.files("/Volumes/LaCie/planet/", 
                  pattern = "*AnalyticMS.tif$", 
                  full.names = TRUE, 
                  recursive = TRUE, 
@@ -11,8 +11,9 @@ im <- list.files("/Volumes/LaCie2big/BCAnalytic/2017/",
 
 dt <- array("", dim = length(im))
 for (i in 1:length(im)) {
-      d <- strsplit(im[i], "_")
-      dt[i] <- as_date(ymd(d[1]))
+      d <- strsplit(im[i], "/")
+      d <- strsplit(d[[1]][length(d[[1]])], "_")
+      dt[i] <- as_date(ymd(d[[1]][1]))
 }
 
 df <- data.frame(dt, im)

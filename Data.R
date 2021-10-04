@@ -15,12 +15,13 @@ library(sp)
 
 # remember to set working directory if needed:
 setwd("/Volumes/LaCie2big/RStudioData/BCAnalytic/2020/")
+setwd("/Users/davidkahler/Documents/planet/pittsburgh/buffalo_creek/planet") # for debugging
 #Lists for necessary files
 #Image list
-im <- list.files("/Volumes/LaCie2big/RStudioData/BCAnalytic/2020/", 
+im <- list.files("./", 
                  pattern = "*AnalyticMS.tif$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
 #Metadata List
-g <- list.files("/Volumes/LaCie2big/RStudioData/BCAnalytic/2020/", 
+g <- list.files("./", 
                 pattern = "*AnalyticMS_metadata.xml$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
 
 #Inputs from 
@@ -59,7 +60,6 @@ for (q in 1:(length(im))){
   # extent format (xmin,xmax,ymin,ymax)
   e <- as(extent(609555.5999,609709.1999,4507753.099,4507867.5999 ), 'SpatialPolygons')
   #crs(e) <- "+proj=longlat +datum=WGS84 +no_defs"
-  crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
   crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
   # Set extent from the Planet file !! This is the area from the picture
   test <- as(extent(pic), 'SpatialPolygons')

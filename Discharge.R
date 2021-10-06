@@ -10,7 +10,8 @@ names(profile)[2] <- "d"
 W <- profile$W
 d <- profile$d
 
-wid <- read.table("width.csv", header = TRUE, sep = ",", dec = ".")
+library(readr)
+wid <- read_csv("width.csv")
 
 if (mean(d)>0){
   d = -d

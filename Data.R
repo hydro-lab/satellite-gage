@@ -1,8 +1,8 @@
 #Run in command line as: Rscript master.R
 
-#Current Update is to inclide a check for existance of the crop boundaries in each raster file else skip
+#Current Update is to include a check for existence of the crop boundaries in each raster file else skip
 
-# Raster calcultion to crop Geotiff, also pulls XML metadata: reflectance coefficient (ps:reflectanceCoefficient)
+# Raster calculation to crop Geotiff, also pulls XML metadata: reflectance coefficient (ps:reflectanceCoefficient)
 library(rgdal)
 library(raster)
 library(rgeos)
@@ -19,10 +19,18 @@ setwd("/Users/davidkahler/Documents/planet/pittsburgh/buffalo_creek/planet") # f
 #Lists for necessary files
 #Image list
 im <- list.files("./", 
-                 pattern = "*AnalyticMS.tif$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
+                 pattern = "*AnalyticMS.tif$", 
+                 full.names = TRUE, 
+                 recursive = TRUE, 
+                 ignore.case=TRUE, 
+                 include.dirs = TRUE)
 #Metadata List
 g <- list.files("./", 
-                pattern = "*AnalyticMS_metadata.xml$", full.names = TRUE, recursive = TRUE, ignore.case=TRUE, include.dirs = TRUE)
+                pattern = "*AnalyticMS_metadata.xml$", 
+                full.names = TRUE, 
+                recursive = TRUE, 
+                ignore.case=TRUE, 
+                include.dirs = TRUE)
 
 #Inputs from 
 #cald <- 4.3; # calibration discharge (the measured discharge), cubic meters per second
@@ -36,15 +44,14 @@ g <- list.files("./",
 #widths <- read.table('widths.txt');
 
 width <- array(-9, dim=c(length(im),6)) #creates the output file as an array that can be easily read as a table
-prowidths <- array(-9, dim=c(length(im),2)) #creates the output file for the parameters for Mannings callibration/use
+prowidths <- array(-9, dim=c(length(im),2)) #creates the output file for the parameters for Manning's calibration/use
 
 # LOOP STARTS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 for (q in 1:(length(im))){
   #Import raw Planet metadata
   fn <- g[q]
   fl <- xmlParse(fn)
-  rc <- setNames(xmlToDataFrame(node=getNodeSet(fl,
-        "//ps:EarthObservation/gml:resultOf/ps:EarthObservationResult/ps:bandSpecificMetadata/ps:reflectanceCoefficient")),"reflectanceCoefficient")
+  rc <- setNames(xmlToDataFrame(node=getNodeSet(fl, "//ps:EarthObservation/gml:resultOf/ps:EarthObservationResult/ps:bandSpecificMetadata/ps:reflectanceCoefficient")),"reflectanceCoefficient")
   dm <- as.matrix(rc)
   # 1 Red
   # 2 Green
@@ -74,7 +81,7 @@ for (q in 1:(length(im))){
     # calculate normalized difference water index (NDWI).  :
     # calculate NDWI using the green (band 2) and nir (band 4) bands
     ndwi <- ((rc2*r[[2]]) - (rc4*r[[4]])) / ((rc2*r[[2]]) + (rc4*r[[4]]))
-   
+    
     
     # To view, during development:
     #plot(ndwi)

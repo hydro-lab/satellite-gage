@@ -56,13 +56,14 @@ g <- list.files("./",
 #profile_headerlines=1;
 #widths <- read.table('widths.txt');
 
-width <- array(-9, dim=c(length(im),6)) #creates the output file as an array that can be easily read as a table
-prowidths <- array(-9, dim=c(length(im),2)) #creates the output file for the parameters for Manning's calibration/use
+#width <- array(-9, dim=c(length(im),6)) #creates the output file as an array that can be easily read as a table
+#prowidths <- array(-9, dim=c(length(im),2)) #creates the output file for the parameters for Manning's calibration/use
 
 # LOOP STARTS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# Replacing loop with a function for parallelization
-# for (q in 1:(length(im))){
-findWidth <- function(fl)
+# Replacing loop with a foreach for parallelization
+# for (q in 1:(length(im))){ # original loop
+registerDoParallel(numCores)
+foreach (q = 1:(length(im))) %dopar% {
      #Import raw Planet metadata
      fn <- g[q]
      fl <- xmlParse(fn)
@@ -80,9 +81,12 @@ findWidth <- function(fl)
      pic <- stack(fn)
      # set extent from QGIS analysis:
      # extent format (xmin,xmax,ymin,ymax)
+     # Buffalo Creek:
      e <- as(extent(609555.5999,609709.1999,4507753.099,4507867.5999 ), 'SpatialPolygons')
-     #crs(e) <- "+proj=longlat +datum=WGS84 +no_defs"
      crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
+     # Mutale River downstream
+     #e <- as(extent( , , , ), 'SpatialPolygons')
+     #crs(e) <- "+proj=longlat +datum=WGS84"
      # Set extent from the Planet file !! This is the area from the picture
      test <- as(extent(pic), 'SpatialPolygons')
      crs(test) <- "+proj=utm +zone=17 +datum=WGS84"

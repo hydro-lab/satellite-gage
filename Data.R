@@ -19,6 +19,9 @@ library(rgeos)
 library(XML)
 library(methods)
 library(sp)
+library(parallel)
+library(MASS)
+library(doParallel)
 
 #rm(im,g)
 #rm(list=ls())
@@ -57,7 +60,9 @@ width <- array(-9, dim=c(length(im),6)) #creates the output file as an array tha
 prowidths <- array(-9, dim=c(length(im),2)) #creates the output file for the parameters for Manning's calibration/use
 
 # LOOP STARTS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-for (q in 1:(length(im))){
+# Replacing loop with a function for parallelization
+# for (q in 1:(length(im))){
+findWidth <- function(fl)
      #Import raw Planet metadata
      fn <- g[q]
      fl <- xmlParse(fn)

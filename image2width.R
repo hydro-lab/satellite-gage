@@ -20,39 +20,61 @@ library(sp)
 library(parallel)
 library(MASS)
 library(doParallel)
+library(stringr)
+library(dplyr)
+library(lubridate)
 
-#rm(im,g)
-#rm(list=ls())
+# remember to set working directory if needed
 
-# remember to set working directory if needed:
-setwd("/Volumes/LaCie2big/RStudioData/BCAnalytic/2020/")
-setwd("/Users/davidkahler/Documents/planet/pittsburgh/buffalo_creek/planet") # for debugging
-#Lists for necessary files
-#Image list
+# Lists for necessary files
+# Image list
 im <- list.files("./", 
                  pattern = "*AnalyticMS.tif$", 
                  full.names = TRUE, 
                  recursive = TRUE, 
                  ignore.case=TRUE, 
                  include.dirs = TRUE)
-#Metadata List
-g <- list.files("./", 
+di <- array(NA, dim = length(im))
+for (i in 1:length(im)) {
+     a <- str_split(im[i],"/")
+     b <- str_split(a[[1]][length(a[[1]])],"_")
+     c <- as.character(b[[1]][1])
+     d <- as.character(b[[1]][2])
+     f <- paste0(c,"T",d)
+     di[i] <- ymd_hms(f)
+}
+
+# Metadata List
+md <- list.files("./", 
                 pattern = "*AnalyticMS_metadata.xml$", 
                 full.names = TRUE, 
                 recursive = TRUE, 
                 ignore.case=TRUE, 
                 include.dirs = TRUE)
+dm <- array(NA, dim = length(md))
+for (i in 1:length(md)) {
+     a <- str_split(md[i],"/")
+     b <- str_split(a[[1]][length(a[[1]])],"_")
+     c <- as.character(b[[1]][1])
+     d <- as.character(b[[1]][2])
+     f <- paste0(c,"T",d)
+     dm[i] <- ymd_hms(f)
+}
 
-#Inputs from 
-#cald <- 4.3; # calibration discharge (the measured discharge), cubic meters per second
-#calw <- 27.8; # calibration width (the measured width), meters
-#S_0 <- 0.0006;# the measured streamwise slope
-#INPUT FILES:
-#profile <- read.table('bcprofile.txt'); #txt readable file of depths where 
-# cross-stream-distance is C1 and measured depth is C2. 
-# File must be sorted by cross-stream-distance in ascending order (from 0:width, top:bottom)
-#profile_headerlines=1;
-#widths <- read.table('widths.txt');
+rm(a,b,c,d,f)
+id <- array(NA, dim = length(im))  # will match metadata filenames to image filenames and dates
+for (i in 1:length(im)) {
+     for (j in 1:length(md)) {
+          if (di[i]==dm[j]) { # if image date matches metadata date,
+               id[i] <- md[j] # store metadata filename matched to image filename and date
+          }
+     }
+}
+imagebank <- data.frame(di,im,id)
+rm(di,dm,im,md,id)
+imagebank <- imagebank %>% 
+     rename(dt=di,md=id) %>% 
+     filter(is.na(md)==FALSE)
 
 #width <- array(-9, dim=c(length(im),6)) #creates the output file as an array that can be easily read as a table
 #prowidths <- array(-9, dim=c(length(im),2)) #creates the output file for the parameters for Manning's calibration/use
@@ -61,7 +83,7 @@ g <- list.files("./",
 # Replacing loop with a foreach for parallelization
 # for (q in 1:(length(im))){ # original loop
 registerDoParallel(numCores)
-foreach (q = 1:(length(im))) %dopar% {
+foreach (q = 1:(length(im))) %dopar% { # parallel computing loop: this changes how data are transferred back from each operation.
      #Import raw Planet metadata
      fn <- g[q]
      fl <- xmlParse(fn)

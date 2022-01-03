@@ -77,11 +77,13 @@ imagebank <- imagebank %>%
      filter(is.na(md)==FALSE) # will contain imagebank data frame with date (dt), image (im), and metadata (md)
 
 # LOOP STARTS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-widths <- array("", dim = c((nrow(imagebank)),7))
-for (q in 1:(2)) { # original loop
+# SINGLE
+#widths <- array(NA, dim = c((nrow(imagebank)),7))
+#for (q in 1:(2)) { # original loop
+# PARALLEL
 # Replacing loop with a foreach for parallelization
-#registerDoParallel(detectCores())
-#widths <- foreach (q = 1:2, .combine = 'rbind') %dopar% { # testing loop,
+registerDoParallel(detectCores())
+widths <- foreach (q = 1:2, .combine = 'rbind') %dopar% { # testing loop,
 #widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # parallel computing loop: this changes how data are transferred back from each operation.
      
      #Import raw Planet metadata to get the reflectance coefficients
@@ -140,9 +142,8 @@ for (q in 1:(2)) { # original loop
           # Import raster image, or take it from previous code, set working directory, if needed.
           
           h = hist(ndwi, # built-in histogram function.
-                   breaks=seq(-1,1,by=0.01), 
-                   main = root, 
-                   xlab = "NDWI") 
+                   breaks=seq(-1,1,by=0.01),
+                   plot=FALSE) 
           # setEPS() # not strictly needed, good for record keeping and trouble shooting.
           # postscript(paste(root, "hist.eps", sep = "."))
           # plot(h, main = root, xlab = "NDWI")
@@ -321,9 +322,9 @@ for (q in 1:(2)) { # original loop
      }
      rm(alng_per,avg,dm,e,h,ndwi,nop,peaks,pointers,rbrick,rc,spat,test,a,alng,b,bins,c,cnt,f,fl,fn,goal,i,i1,i2,j,j1,j2,k,LDB,m,ma,mp,n,ra,rc2,rc4,RDB,restart,root,sec,t,thr,threepeak,twopeak,v,w,x1,x2,y1,y2)
      # for single string processing
-     for (i in 1:7) {
-          widths[q,i] <- output[i]
-     }
+     # for (i in 1:7) {
+     #      widths[q,i] <- output[i]
+     # }
      print(output)
 }
 

@@ -83,8 +83,8 @@ imagebank <- imagebank %>%
 # PARALLEL
 # Replacing loop with a foreach for parallelization
 registerDoParallel(detectCores())
-widths <- foreach (q = 1:2, .combine = 'rbind') %dopar% { # testing loop,
-#widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # parallel computing loop: this changes how data are transferred back from each operation.
+#widths <- foreach (q = 1:2, .combine = 'rbind') %dopar% { # testing loop,
+widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # parallel computing loop: this changes how data are transferred back from each operation.
      
      #Import raw Planet metadata to get the reflectance coefficients
      fn <- imagebank$md[q]
@@ -238,6 +238,8 @@ widths <- foreach (q = 1:2, .combine = 'rbind') %dopar% { # testing loop,
           y1 <- (4507801.407)
           y2 <- (4507831.586)
           # Mutale River 
+          
+          # Slopes:
           ma <- (y2-y1)/(x2-x1)
           #this next part will rely on UTM (the coordinates are in meters)
           ra <- (0.1) # r is the step size of each point along our width
@@ -262,18 +264,22 @@ widths <- foreach (q = 1:2, .combine = 'rbind') %dopar% { # testing loop,
           # To export table or NDWI v. position as a new file
           # write.table(alng, file = paste(root, "distwidth.csv", sep="."), append = TRUE, sep = ",", dec = ".", col.names = FALSE)
           
+          RDB <- -9999 # preallocate in case of failed search algorithm
+          LDB <- -9999
           alng_per <- array(-9, dim=c(f,2)) #allocation for the midpoints
-          #when you reach -9 in that array you've reached the end of the midpoints/values found
+          # when you reach -9 in that array you've reached the end of the midpoints/values found
           restart <- 2 #initial start for i search
           for (j in 1:f){
                cnt=1
                for (i in restart:f){
-                    if (alng[i]==alng[i-1]){
-                         cnt=cnt+1
-                    } 
-                    else {
-                         restart <- i+1 #to keep moving forward from the last section without causing a loop at the end of it
-                         break
+                    if (is.na(alng[i])==FALSE) {
+                         if (alng[i]==alng[i-1]){
+                              cnt=cnt+1
+                         } 
+                         else {
+                              restart <- i+1 #to keep moving forward from the last section without causing a loop at the end of it
+                              break
+                         }
                     }
                }
                mp <- ((cnt*ra)/2) #ra is the spacing, and mp gives the midpoint of the current distance section
@@ -320,7 +326,7 @@ widths <- foreach (q = 1:2, .combine = 'rbind') %dopar% { # testing loop,
           output[6] <- RDB #location in meters of bank 2
           output[7] <- LDB-RDB #gives width in meters
      }
-     rm(alng_per,avg,dm,e,h,ndwi,nop,peaks,pointers,rbrick,rc,spat,test,a,alng,b,bins,c,cnt,f,fl,fn,goal,i,i1,i2,j,j1,j2,k,LDB,m,ma,mp,n,ra,rc2,rc4,RDB,restart,root,sec,t,thr,threepeak,twopeak,v,w,x1,x2,y1,y2)
+     #rm(alng_per,avg,dm,e,h,ndwi,nop,peaks,pointers,rbrick,rc,spat,test,a,alng,b,bins,c,cnt,f,fl,fn,goal,i,i1,i2,j,j1,j2,k,LDB,m,ma,mp,n,ra,rc2,rc4,RDB,restart,root,sec,t,thr,threepeak,twopeak,v,w,x1,x2,y1,y2) # this tried to remove vars that didnt exist... oops
      # for single string processing
      # for (i in 1:7) {
      #      widths[q,i] <- output[i]

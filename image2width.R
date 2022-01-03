@@ -77,8 +77,8 @@ imagebank <- imagebank %>%
      filter(is.na(md)==FALSE) # will contain imagebank data frame with date (dt), image (im), and metadata (md)
 
 # LOOP STARTS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-widths <- array(NA, dim = c(nrow(imagebank),7))
-for (q in 1:(length(im))){ # original loop
+widths <- array("", dim = c((nrow(imagebank)),7))
+for (q in 1:(2)) { # original loop
 # Replacing loop with a foreach for parallelization
 #registerDoParallel(detectCores())
 #widths <- foreach (q = 1:2, .combine = 'rbind') %dopar% { # testing loop,
@@ -319,9 +319,11 @@ for (q in 1:(length(im))){ # original loop
           output[6] <- RDB #location in meters of bank 2
           output[7] <- LDB-RDB #gives width in meters
      }
-     rm(alng_per,avg,dm,e,h,ndwi,nop,peaks,pointers,rbrick,rc,spat,test,a,alng,b,bins,c,cnt,f,fl,fn,goal,i,i1,i2,j,j1,j2,k,LDB,m,ma,mp,n,q,ra,rc2,rc4,RDB,restart,root,sec,t,thr,threepeak,twopeak,v,w,x1,x2,y1,y2)
+     rm(alng_per,avg,dm,e,h,ndwi,nop,peaks,pointers,rbrick,rc,spat,test,a,alng,b,bins,c,cnt,f,fl,fn,goal,i,i1,i2,j,j1,j2,k,LDB,m,ma,mp,n,ra,rc2,rc4,RDB,restart,root,sec,t,thr,threepeak,twopeak,v,w,x1,x2,y1,y2)
      # for single string processing
-     widths[q,] <- output
+     for (i in 1:7) {
+          widths[q,i] <- output[i]
+     }
      print(output)
 }
 

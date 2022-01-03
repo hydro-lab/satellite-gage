@@ -84,8 +84,9 @@ imagebank <- imagebank %>%
 # for (q in 1:(length(im))){ # original loop
 registerDoParallel(numCores)
 foreach (q = 1:(length(im))) %dopar% { # parallel computing loop: this changes how data are transferred back from each operation.
-     #Import raw Planet metadata
-     fn <- g[q]
+     
+     #Import raw Planet metadata to get the reflectance coefficients
+     fn <- imagebank$md[q]
      fl <- xmlParse(fn)
      rc <- setNames(xmlToDataFrame(node=getNodeSet(fl, "//ps:EarthObservation/gml:resultOf/ps:EarthObservationResult/ps:bandSpecificMetadata/ps:reflectanceCoefficient")),"reflectanceCoefficient")
      dm <- as.matrix(rc)
@@ -97,7 +98,7 @@ foreach (q = 1:(length(im))) %dopar% { # parallel computing loop: this changes h
      rc4 <- as.numeric(dm[4]) # NIR
      
      # Import raster image, crops to chosen extent
-     fn <- im[q]
+     fn <- imagebank$im[q]
      pic <- stack(fn)
      # set extent from QGIS analysis:
      # extent format (xmin,xmax,ymin,ymax)
@@ -112,56 +113,48 @@ foreach (q = 1:(length(im))) %dopar% { # parallel computing loop: this changes h
      crs(test) <- "+proj=utm +zone=17 +datum=WGS84"
      if (gWithin(e, test, byid = FALSE)) {
           r <- crop(pic, e)
-          # rm(pic) # remove rest of image from RAM
-          
-          #options(stringsAsFactors = FALSE)
-          
+          rm(pic) # remove rest of image from RAM
           rbrick <- brick(r)
-          # calculate normalized difference water index (NDWI).  :
           # calculate NDWI using the green (band 2) and nir (band 4) bands
           ndwi <- ((rc2*r[[2]]) - (rc4*r[[4]])) / ((rc2*r[[2]]) + (rc4*r[[4]]))
-          
-          
           # To view, during development:
           #plot(ndwi)
           
           # To export cropped NDWI as a new file and create filename root
-          p <- strsplit(im[q], "_3B_AnalyticMS.tif")
+          p <- strsplit(imagebank$im[q], "_3B_AnalyticMS.tif")
           r <- strsplit(p[[1]], "/")
           lr <- tolower(r[[1]])
           len <- length(lr)
           root <- lr[[len]]
-          
-          writeRaster(x = ndwi,
+          rm(p,r,lr,len)
+          writeRaster(x = ndwi, # this does not need to be done, just a nice record.
                       filename= paste(root, "cndwi.tif", sep="."),
                       format = "GTiff", # save as a tif
                       # save as a FLOAT if not default, not integer
                       overwrite = TRUE)  # OPTIONAL - be careful. This will OVERWRITE previous files.
-     }
+     #} ##### MOVE THIS, the if statement should include the width finder
      
-     width[q,1] <- root #for output file: root name of image
+     output <- array(NA, dim = 6)
+     output[1] <- root #for output file: root name of image
      
      # This code finds the boundary of the water in a normalized difference water index 
-     #image based on the histogram of the pixel values.
-     # This code uses the cropped, single-layer, NDWI image
+     # This code uses the cropped, single-layer, NDWI image.  Image based on the histogram of the pixel values.
      
      # Import raster image, or take it from previous code, set working directory, if needed.
      
-     h = hist(ndwi, breaks=seq(-1,1,by=0.01)) # built-in histogram function.
+     h = hist(ndwi, # built-in histogram function.
+              breaks=seq(-1,1,by=0.01), 
+              main = root, 
+              xlab = "NDWI") 
+     # setEPS() # not strictly needed, good for record keeping and trouble shooting.
+     # postscript(paste(root, "hist.eps", sep = "."))
+     # plot(h)
+     # dev.off()
+     
      # Positions: h$mids       number
      # Values:    h$counts     integer
      bins <- h$mids
      v <- h$counts
-     
-     #png(filename = root, "hist.png")
-     #plot(h)
-     #dev.copy(png, filename = paste(root, "hist.png", sep = "."))
-     #dev.off()
-     setEPS()
-     postscript(paste(root, "hist.eps", sep = "."))
-     plot(h)
-     dev.off()  
-     
      
      # Allocate arrays used in analysis
      avg <- array(0, dim = c(200,10))
@@ -236,13 +229,13 @@ foreach (q = 1:(length(im))) %dopar% { # parallel computing loop: this changes h
      }
      # Water's Edge LOOP ENDS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      
-     width[q,2] <-threepeak #for output file: value for the edge of water (3 peak)
-     width[q,3] <-twopeak #for output file: value for the edge of water (2 peak)
+     output[2] <-threepeak #for output file: value for the edge of water (3 peak)
+     output[3] <-twopeak #for output file: value for the edge of water (2 peak)
      
      # write individual water's edge values to the compiled water's edge file
-     date <- as.character(Sys.Date())
-     ex <- data.frame(threepeak, twopeak, date)
-     write.table(ex, file = "wateredge.csv", append = TRUE, sep = ",", dec = ".", col.names = FALSE)
+     #date <- as.character(Sys.Date())
+     #ex <- data.frame(threepeak, twopeak, date)
+     #write.table(ex, file = "wateredge.csv", append = TRUE, sep = ",", dec = ".", col.names = FALSE)
      #write.txt((c(threepeak, twopeak, date)), file = "wateredge.txt", append = TRUE, sep = ", ", dec = ".")
      #write.csv(ex,file = "wateredge.csv")
      # output will be in the same order as the input files
@@ -346,9 +339,12 @@ foreach (q = 1:(length(im))) %dopar% { # parallel computing loop: this changes h
      width[q,4] <- LDB #location in meters of bank 1
      width[q,5] <- RDB #location in meters of bank 2
      width[q,6] <- LDB-RDB #gives width in meters
-     prowidths[q,1] <- root
-     prowidths[q,2] <- LDB-RDB
+     # prowidths[q,1] <- root
+     # prowidths[q,2] <- LDB-RDB
+     }
 }
+
+
 survey <- data.frame(width)
 names(survey)[1] <- "filename"
 names(survey)[2] <- "waters_edge_value_3peak"
@@ -358,7 +354,7 @@ names(survey)[5] <- "RDB_location_m"
 names(survey)[6] <- "width_m"
 write.table(survey, file = "width.csv", append = TRUE, sep = ",", dec = ".", row.names = FALSE, col.names = TRUE)
 
-write.table(prowidths, file = "widths.txt", append = TRUE, sep = ",", dec = ".", row.names = FALSE, col.names = FALSE)
+# write.table(prowidths, file = "widths.txt", append = TRUE, sep = ",", dec = ".", row.names = FALSE, col.names = FALSE)
 
 # run in command line as:
 # r -f peaktest.r

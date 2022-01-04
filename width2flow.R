@@ -10,6 +10,7 @@
 
 library(readr)
 library(lubridate)
+library(ggplot2)
 
 # Remember to set working directory
 
@@ -25,11 +26,15 @@ if (mean(profile$height_m)>0){ # guesses if the average height is positive, that
 
 wid <- read_csv("width.csv") # (7) $dt, $filename, $ndwi_threshold_3, $ndwi_threshold_2, $left_m, $right_m, $width_m
 
-plot(profile, type = "p", main="Bathymetric Profile", 
-     xlab= "Cross-stream-distance (m)" ,
-     ylab ="Depth (m)") # Check units
+ggplot(profile) +
+     geom_line(aes(x = location_m, y = height_m)) +
+     xlab("Cross-stream distance (m)") +
+     ylab("Bathymetry (m)") +
+     theme(panel.background = element_rect(fill = "white", colour = "black")) +
+     theme(aspect.ratio = 1) +
+     theme(axis.text = element_text(face = "plain", size = 12))
 
-min_depth <- min(d);
+min_depth <- min(profile$height_m)
 
 for (i in 2:(length(W)-1)){
   if ((d[i]>min_depth)&(d[i-1]<d[i])&(d[i]>d[i+1])){

@@ -8,26 +8,22 @@
 # www.duq.edu/limpopo 
 # https://github.com/LimpopoLab 
 
-
-setwd("/Volumes/LaCie2big/RStudioData/BCAnalytic/2020/")
-calibration_discharge <- 4.567; # cubic meters per second
-calibration_width <- 27.65; # meters
-S_0 <- 0.0167;
-
-profile <- read.table("buffalo1cali.txt")
-names(profile)[1] <- "W"
-names(profile)[2] <- "d"
-
-W <- profile$W
-d <- profile$d
-
 library(readr)
-wid <- read_csv("width.csv")
+library(lubridate)
 
-if (mean(d)>0){
-  d = -d
-  profile$d = -profile$d
+# Remember to set working directory
+
+# Channel-specific information
+calibration_discharge <- 4.567 # discharge, cubic meters per second
+calibration_width <- 27.65 # width, meters
+S_0 <- 0.0167 # slope, dimensionless
+
+profile <- read_csv("profile.csv") # (2) $location_m and $height_m
+if (mean(profile$height_m)>0){ # guesses if the average height is positive, that the height vector points down
+     profile$height_m = -profile$height_m # code is based on the height vector to point up
 }
+
+wid <- read_csv("width.csv") # (7) $dt, $filename, $ndwi_threshold_3, $ndwi_threshold_2, $left_m, $right_m, $width_m
 
 plot(profile, type = "p", main="Bathymetric Profile", 
      xlab= "Cross-stream-distance (m)" ,

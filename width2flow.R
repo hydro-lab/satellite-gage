@@ -32,48 +32,52 @@ ggplot(profile) +
      theme(axis.text = element_text(face = "plain", size = 12))
 
 min_depth <- min(profile$height_m)
+W <- profile$location_m
+d <- profile$height_m
 
 wid <- read_csv("width.csv") # (7) $dt, $filename, $ndwi_threshold_3, $ndwi_threshold_2, $left_m, $right_m, $width_m
 
+# Search for the minimum depth that will still generate a single channel (avoid braiding), first identify actual minimum
+for (i in 2:(length(W)-1)){
+     if (min_depth==d[i]){
+          min_depth_index <- i
+     }
+}
+# overwrite if there is a peak, if none, it will not overwrite
 for (i in 2:(length(W)-1)){
   if ((d[i]>min_depth)&(d[i-1]<d[i])&(d[i]>d[i+1])){
-    min_depth=d[i];
-    min_depth_index=i;
+    min_depth=d[i]
+    min_depth_index=i
   }
 }
-
-# Find the endpoints of the lowest stage possible in analysis.
-for (i in 2:(min_depth_index)){
+# Find the endpoints of the lowest stage possible in analysis.  First, prepopulate if there it is at the bottom
+min_width_1 <- W[min_depth_index]
+min_width_index_1 <- min_depth_index
+min_width_2 <- W[min_depth_index]
+min_width_index_2 <- min_depth_index
+for (i in 2:(min_depth_index)){ # approach from index = 1
   if ((d[i-1]>=min_depth)&(min_depth>d[i])){
-    min_width_1=W[i-1]+((W[i]-W[i-1])/(d[i]-d[i-1]))*(min_depth-d[i-1]);
-    min_width_index_1=i;
+    min_width_1=W[i-1]+((W[i]-W[i-1])/(d[i]-d[i-1]))*(min_depth-d[i-1])
+    min_width_index_1=i
   }
 }
-for (i in (min_depth_index+2):(length(W))){
+for (i in (min_depth_index+2):(length(W))){ # continue from the minimum physical depth to the other side
   if ((d[i-1]<=min_depth)&(min_depth<d[i])){
-    min_width_2=W[i-1]+((W[i]-W[i-1])/(d[i]-d[i-1]))*(min_depth-d[i-1]);
-    min_width_index_2=i-1;
+    min_width_2=W[i-1]+((W[i]-W[i-1])/(d[i]-d[i-1]))*(min_depth-d[i-1])
+    min_width_index_2=i-1
   }
 }
+min_width <- (min_width_2-min_width_1) # minimum width as to avoid braiding
 
+# Find the maximum width that can be used in the code, that is, for which we have bathymetry data.  Again, prepopulate:
+max_width_1 <- W[1] # "top" of the channel
+max_width_2 <- W[length(W)] # top on the other side
+max_depth <- d[1]
+max_width_index_1 <- 1
+max_width_index_2 <- length(W)
 
-min_width <- (min_width_2-min_width_1);
-
-max_width_1=W[1];
-max_width_2=W[length(W)];
-max_depth <- d[1];
-
-max_width_index_1 <- 1;
-max_width_index_2 <- length(W);
-
-
-for (i in (min_depth_index+2):(length(W))){
-  if ((d[i-1]<min_depth)&(min_depth<d[i])){
-    min_width_2=W[i-1]+((W[i]-W[i-1])/(d[i]-d[i-1]))*(min_depth-d[i-1]);
-    min_width_index_2=i-1;
-  }
-}
-
+# In the event that the endpoints do not reach the same datum:
+# Scenario 1: depth at near bank is lower, adjust far bank
 if ((d[1]<d[length(W)])){
   for (i in (min_depth_index_2+1):length(W)){
     if ((d[i-1]<d[1])&(d[1]<d[i])){

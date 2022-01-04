@@ -104,15 +104,15 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
      # set extent from QGIS analysis:
      # extent format (xmin,xmax,ymin,ymax)
      # Buffalo Creek:
-     e <- as(extent(609555.5999,609709.1999,4507753.099,4507867.5999 ), 'SpatialPolygons')
+     e <- as(extent(609555.5999,609709.1999,4507753.099,4507867.5999 ), 'SpatialPolygons') # Extent needed
      crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
      # Mutale River downstream
      #e <- as(extent( , , , ), 'SpatialPolygons')
      #crs(e) <- "+proj=longlat +datum=WGS84"
      # Set extent from the Planet file !! This is the area from the picture
-     test <- as(extent(pic), 'SpatialPolygons')
+     test <- as(extent(pic), 'SpatialPolygons') # Extent of image
      crs(test) <- "+proj=utm +zone=17 +datum=WGS84"
-     if (gWithin(e, test, byid = FALSE)) {
+     if (gCovers(test,e)) { # returns TRUE if no point in spgeom2 (e, needed) is outside spgeom1 (test, image extent) # used to be (gWithin(e, test, byid = FALSE))
           r <- crop(pic, e)
           rm(pic) # remove rest of image from RAM
           rbrick <- brick(r)
@@ -259,39 +259,38 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           spat <- SpatialPoints(pointers)
           
           alng <- extract(ndwi, spat, method='simple')
-          # plot(alng, xlab="Place along transect", ylab="NDWI")
-          
+          # plot(alng, xlab="Position along transect", ylab="NDWI")
           # To export table or NDWI v. position as a new file
           # write.table(alng, file = paste(root, "distwidth.csv", sep="."), append = TRUE, sep = ",", dec = ".", col.names = FALSE)
           
           RDB <- -9999 # preallocate in case of failed search algorithm
           LDB <- -9999
           alng_per <- array(-9, dim=c(f,2)) #allocation for the midpoints
-          # when you reach -9 in that array you've reached the end of the midpoints/values found
+          # when you reach -9 in that array, you've reached the end of the midpoints/values found
           restart <- 2 #initial start for i search
           for (j in 1:f){
-               cnt=1
-               for (i in restart:f){
+               cnt <- 1
+               for (i in restart:f) {
                     if (is.na(alng[i])==FALSE) {
-                         if (alng[i]==alng[i-1]){
-                              cnt=cnt+1
-                         } 
-                         else {
-                              restart <- i+1 #to keep moving forward from the last section without causing a loop at the end of it
-                              break
+                         if (alng[i]==alng[i-1]) { # determines if the next value is equal
+                              cnt <- cnt + 1 # counts how many values there are
+                         } else {
+                              restart <- i + 1 #to keep moving forward from the last section without causing a loop at the end of it
+                              break # breaks from current for loop.
                          }
                     }
                }
                mp <- ((cnt*ra)/2) #ra is the spacing, and mp gives the midpoint of the current distance section
-               if (i<(f)){
-                    alng_per[j,1] <- (((i-1)*ra)-mp) 
-                    alng_per[j,2] <- alng[i-1] 
+               if (is.na(alng[i-1])==FALSE) {
+                    if (i<(f)) {
+                         alng_per[j,1] <- (((i-1)*ra)-mp) 
+                         alng_per[j,2] <- alng[i-1] 
+                    } else {
+                         alng_per[j,1] <- ((f*ra)-mp) 
+                         alng_per[j,2] <- alng[i-1] 
+                    }
                }
-               else{
-                    alng_per[j,1] <- ((f*ra)-mp) 
-                    alng_per[j,2] <- alng[i-1] 
-               }
-               if (i>=(f)){
+               if (i>=(f)) {
                     break
                } 
           }

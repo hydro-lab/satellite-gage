@@ -23,9 +23,6 @@ profile <- read_csv("profile.csv") # (2) $location_m and $height_m
 if (mean(profile$height_m)>0){ # guesses if the average height is positive, that the height vector points down
      profile$height_m = -profile$height_m # code is based on the height vector to point up
 }
-
-wid <- read_csv("width.csv") # (7) $dt, $filename, $ndwi_threshold_3, $ndwi_threshold_2, $left_m, $right_m, $width_m
-
 ggplot(profile) +
      geom_line(aes(x = location_m, y = height_m)) +
      xlab("Cross-stream distance (m)") +
@@ -35,6 +32,8 @@ ggplot(profile) +
      theme(axis.text = element_text(face = "plain", size = 12))
 
 min_depth <- min(profile$height_m)
+
+wid <- read_csv("width.csv") # (7) $dt, $filename, $ndwi_threshold_3, $ndwi_threshold_2, $left_m, $right_m, $width_m
 
 for (i in 2:(length(W)-1)){
   if ((d[i]>min_depth)&(d[i-1]<d[i])&(d[i]>d[i+1])){

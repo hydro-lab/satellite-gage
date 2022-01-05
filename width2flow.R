@@ -11,6 +11,7 @@
 library(readr)
 library(lubridate)
 library(ggplot2)
+library(dplyr)
 
 # Remember to set working directory
 
@@ -34,8 +35,6 @@ ggplot(profile) +
 min_depth <- min(profile$height_m)
 W <- profile$location_m
 d <- profile$height_m
-
-wid <- read_csv("width.csv") # (7) $dt, $filename, $ndwi_threshold_3, $ndwi_threshold_2, $left_m, $right_m, $width_m
 
 # Search for the minimum depth that will still generate a single channel (avoid braiding), first identify actual minimum
 for (i in 2:(length(W)-1)){
@@ -75,8 +74,7 @@ max_width_2 <- W[length(W)] # top on the other side
 max_depth <- d[1]
 max_width_index_1 <- 1
 max_width_index_2 <- length(W)
-
-# In the event that the endpoints do not reach the same datum:
+# In the event that the endpoints do not reach the same datum (ideally, they will be at the same height):
 # Scenario 1: depth at near bank is lower, adjust far bank
 if ((d[1]<d[length(W)])){
   for (i in (min_depth_index_2+1):length(W)){
@@ -96,12 +94,12 @@ if (d[1]>(d[length(W)])){
     }
   }
 }
-
 max_width = max_width_2-max_width_1;
 
-new_far <- array(-9999, dim = c(((min_width_index_1)-(max_width_index_1)+1),2))
-new_near <- array(-9999, dim = c(((max_width_index_2)-(min_width_index_2)+1),2))
-
+# In order to construct a bathymetry, we need points on both sides of the channel to find level widths.  This will construct those points on each side.
+new_far <- array(-9999, dim = c(((min_width_index_1)-(max_width_index_1)+1),2)) # uses the number of "near side" (which start at i = 1) points
+new_near <- array(-9999, dim = c(((max_width_index_2)-(min_width_index_2)+1),2)) # uses the number of "far side" points
+# Search along the "near" or i=1 to min
 for (i in (max_width_index_1):(min_width_index_1-1)){
   for (j in ((min_width_index_2+1):(length(W)))){
     if (((d[j-1]<d[i]))&((d[i]<d[j]))){
@@ -110,9 +108,9 @@ for (i in (max_width_index_1):(min_width_index_1-1)){
     }
   }
 }
-
 new_far[min_width_index_1-max_width_index_1+1,1] <- min_width_2;
-new_far[min_width_index_1-max_width_index_1+1,2]<- min_depth;
+new_far[min_width_index_1-max_width_index_1+1,2] <- min_depth;
+# Search along the "far" or min to end of index
 for (i in ((min_width_index_2+1):max_width_index_2)){
   for (j in 2:min_width_index_1){
     if (((d[j-1]>d[i]))&((d[i]>d[j]))){
@@ -121,38 +119,55 @@ for (i in ((min_width_index_2+1):max_width_index_2)){
     }
   }
 }
-
 new_near[max_width_index_2+1-min_width_index_2,1] <- min_width_1;
 new_near[max_width_index_2+1-min_width_index_2,2] <- min_depth;
 
+# Form new list of positions
 prof <- cbind(W, d)
 new <- rbind(new_near, new_far)
 complet <- rbind(prof, new)
 temp <- complet[order(complet[,1]),]
+rm(prof,new,complet)
+rm(new_near,new_far,W,d)
 
-head=0; foot=0;
+head <- 0
+foot <- 0
+rpt <- array(0, dim = nrow(temp))
 for (i in 1:nrow(temp)){
-  if ((temp[i,1])<max_width_1){
-    head=head+1;
-  }
-  if ((temp[i,1])<=max_width_2){
-    foot=foot+1;
-  }
+     if (i >= 2) {
+          if (temp[i,1]==temp[(i-1),1]) { # checks for repeats
+               rpt[i] <- rpt[i] + 1
+          }
+     }
+     if ((temp[i,1])<max_width_1){ # checks for anything that is positioned before the maximum width position at the near end
+          head=head+1;
+     }
+     if ((temp[i,1])<=max_width_2){ # counts everything that is positioned before or at the maximum width position at the far end
+          foot=foot+1;
+     }
 }
 
-xsec=temp[(head+1):foot,] 
+xsec <- temp[(head+1):foot,]
+rpt <- rpt[(head+1):foot]
 rm(temp)
+xsec <- data.frame(xsec[,1],xsec[,2],rpt)
+xsec <- xsec %>%
+     rename(location_m=xsec...1.,height_m=xsec...2.) %>%
+     filter(rpt==0) %>%
+     select(-rpt)
+
+# Create a table of width intervals (column 4)
 levels <- array(-9999, dim = c(nrow(xsec),4))
-for (i in 1:nrow(xsec)){
-  if (xsec[i,2]<min_depth){
+for (i in 1:(nrow(xsec)-1)) {
+  if (xsec$height_m[i]<min_depth){
     break
   }
-  levels[i,1]=xsec[i,2]; # depth
-  levels[i,2]=xsec[i,1]; # Near bank position
+  levels[i,1]=xsec$height_m[i]; # depth
+  levels[i,2]=xsec$location_m[i]; # Near bank position
   for (j in (i+1):nrow(xsec)){
-    if ((xsec[i,2])==(xsec[j,2])){
-      levels[i,3] <- xsec[j,1]; # Far bank position
-      levels[i,4] <- xsec[j,1]-xsec[i,1]; # width
+    if ((xsec$height_m[i])==(xsec$height_m[j])){
+      levels[i,3] <- xsec$location_m[j]; # Far bank position
+      levels[i,4] <- xsec$location_m[j]-xsec$location_m[i]; # width, which will provide the intervals
     }
   }
 }
@@ -190,6 +205,8 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){
 }else{
   print("calibration failed")
 }
+
+widths <- read_csv("width.csv") # (7) $dt, $filename, $ndwi_threshold_3, $ndwi_threshold_2, $left_m, $right_m, $width_m
 
 # now, the data is in a dataframe called wid.
 dataout <- array(-9, dim=c(nrow(wid), 4))

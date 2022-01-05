@@ -257,4 +257,3 @@ for (k in 1:(nrow(widths))){
 
 satellite.gage <- data.frame(dt,width,q)
 write_csv(satellite.gage, "sat_gage.csv")
-

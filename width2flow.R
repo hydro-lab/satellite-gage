@@ -214,44 +214,44 @@ width <- widths$width_m
 q <- array(NA, dim = nrow(widths))
 for (k in 1:(nrow(widths))){
      if (is.na(widths$width_m[k])==FALSE) {
-  for (i in 2:nrow(levels)){
-    if ((levels[(i-1),4]>widths$width_m[k])&(widths$width_m[k]>=levels[i,4])){
-      wid_depth=levels[i-1,1]-(levels[i-1,4]-widths$width_m[k])*(levels[i-1,1]-levels[i,1])/(levels[i-1,4]-levels[i,4]);
-      wid_near=levels[i-1,2]-(levels[i-1,4]-widths$width_m[k])*(levels[i-1,2]-levels[i,2])/(levels[i-1,4]-levels[i,4]);
-      wid_far=levels[i-1,3]-(levels[i-1,4]-widths$width_m[k])*(levels[i-1,3]-levels[i,3])/(levels[i-1,4]-levels[i,4]);
-      for (j in 2:nrow(levels)){
-        if ((xsec[j-1,2]>wid_depth)&(wid_depth>=xsec[j,2])){
-          near=j;
-        }
-      }
-      for (j in (near+1):nrow(xsec)){
-        if ((xsec[(j-1),2]<=wid_depth)&(wid_depth<xsec[j,2])){
-          far=j-1;
-        }
-      }
-      area=(xsec[near,1]-cal_near)*(wid_depth-xsec[near,2])/2;
-      wp=((xsec[near,1]-cal_near)^2+(wid_depth-xsec[near,2])^2)^(1/2);
-      for (j in near:(far-1)){
-        area <- area+(xsec[j+1,1]-xsec[j,1])*((wid_depth-xsec[j+1,2])+(wid_depth-xsec[j,2]))/2;
-        wp <- wp+((xsec[j+1,1]-xsec[j,1])^2+(xsec[j+1,2]-xsec[j,2])^2)^(1/2);
-      }
-      area <- area+((wid_far-xsec[far,1])*(wid_depth-xsec[far,2])/2);
-      wp <- wp+((wid_far-xsec[far,1])^2+(wid_depth-xsec[far,2])^2)^(1/2);
-    }
-  }
-  R_H=area/wp;
-  Q=area*(R_H^(2/3))*(S_0^(1/2))/n;
-  if (widths$width_m[k]<min_width){
-    R_H=-8;
-    area=-8;
-    Q=-8;
-  }
-  if (widths$width_m[k]>max_width){
-    R_H=-9;
-    area=-9;
-    Q=-9;
-  }
-  q[k]=Q
+          for (i in 2:nrow(levels)){
+               if ((levels[(i-1),4]>widths$width_m[k])&(widths$width_m[k]>=levels[i,4])){
+                    wid_depth=levels[i-1,1]-(levels[i-1,4]-widths$width_m[k])*(levels[i-1,1]-levels[i,1])/(levels[i-1,4]-levels[i,4]);
+                    wid_near=levels[i-1,2]-(levels[i-1,4]-widths$width_m[k])*(levels[i-1,2]-levels[i,2])/(levels[i-1,4]-levels[i,4]);
+                    wid_far=levels[i-1,3]-(levels[i-1,4]-widths$width_m[k])*(levels[i-1,3]-levels[i,3])/(levels[i-1,4]-levels[i,4]);
+                    for (j in 2:nrow(levels)){
+                         if ((xsec[j-1,2]>wid_depth)&(wid_depth>=xsec[j,2])){
+                              near=j;
+                         }
+                    }
+                    for (j in (near+1):nrow(xsec)){
+                         if ((xsec[(j-1),2]<=wid_depth)&(wid_depth<xsec[j,2])){
+                              far=j-1;
+                         }
+                    }
+                    area=(xsec[near,1]-cal_near)*(wid_depth-xsec[near,2])/2;
+                    wp=((xsec[near,1]-cal_near)^2+(wid_depth-xsec[near,2])^2)^(1/2);
+                    for (j in near:(far-1)){
+                         area <- area+(xsec[j+1,1]-xsec[j,1])*((wid_depth-xsec[j+1,2])+(wid_depth-xsec[j,2]))/2;
+                         wp <- wp+((xsec[j+1,1]-xsec[j,1])^2+(xsec[j+1,2]-xsec[j,2])^2)^(1/2);
+                    }
+                    area <- area+((wid_far-xsec[far,1])*(wid_depth-xsec[far,2])/2);
+                    wp <- wp+((wid_far-xsec[far,1])^2+(wid_depth-xsec[far,2])^2)^(1/2);
+               }
+          }
+          R_H=area/wp;
+          Q=area*(R_H^(2/3))*(S_0^(1/2))/n;
+          if (widths$width_m[k]<min_width){
+               R_H=-8;
+               area=-8;
+               Q=-8;
+          }
+          if (widths$width_m[k]>max_width){
+               R_H=-9;
+               area=-9;
+               Q=-9;
+          }
+          q[k]=Q
      }
 }
 

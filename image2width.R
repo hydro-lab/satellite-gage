@@ -24,6 +24,7 @@ library(stringr)
 library(dplyr)
 library(lubridate)
 library(readr)
+library(ggplot2)
 
 # remember to set working directory if needed
 
@@ -142,18 +143,11 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           
           # Import raster image, or take it from previous code, set working directory, if needed.
           
-          h = hist(ndwi, # built-in histogram function.
+          h = hist(ndwi, # built-in histogram function.  To find values only.  Plotting is at the end of this loop.
                    breaks=seq(-1,1,by=0.01),
                    plot=FALSE) 
-          # setEPS() # not strictly needed, good for record keeping and trouble shooting.
-          # postscript(paste(root, "hist.eps", sep = "."))
-          # plot(h, main = root, xlab = "NDWI")
-          # dev.off()
-          
-          # Positions: h$mids       number
-          # Values:    h$counts     integer
-          bins <- h$mids
-          v <- h$counts
+          bins <- h$mids # positions    number
+          v <- h$counts # counts        integer
           
           # Allocate arrays used in analysis
           avg <- array(0, dim = c(200,10))
@@ -204,7 +198,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
                     }
                     threepeak <- (bins[(goal)])
                }
-               # test if exactly three peaks were not found
+               # test in case exactly three peaks were not found
                if ((nop[w])==2){
                     # find the position of the first and second (the only) peaks
                     for (j in 1:200){
@@ -226,6 +220,19 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
                     twopeak <- (bins[(goal)])
                }
           }
+          
+          # Used in issue #1: Recheck histogram values.  Will comment out after diagnostics
+          h <- ggplot(ndwi) +
+               geom_histogram(breaks = (c(0:200)/100-1), color = "black", fill = "gray") +
+               geom_vline(aes(xintercept = twopeak), color = "green") +
+               geom_vline(aes(xintercept = threepeak), color = "blue") +
+               xlab("NDWI") +
+               ylab("Count") +
+               theme(panel.background = element_rect(fill = "white", colour = "black")) +
+               theme(aspect.ratio = 1) +
+               theme(axis.text = element_text(face = "plain", size = 12))
+          ggsave(paste0(root,"hist.eps"), h, device = "jpeg", dpi = 72)
+          
           # Water's Edge LOOP ENDS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           
           output[3] <-threepeak #for output file: value for the edge of water (3 peak)

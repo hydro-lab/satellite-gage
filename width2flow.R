@@ -159,17 +159,17 @@ xsec <- xsec %>%
 # Create a table of width intervals (column 4)
 levels <- array(-9999, dim = c(nrow(xsec),4))
 for (i in 1:(nrow(xsec)-1)) {
-  if (xsec$height_m[i]<min_depth){
-    break
-  }
-  levels[i,1]=xsec$height_m[i]; # depth
-  levels[i,2]=xsec$location_m[i]; # Near bank position
-  for (j in (i+1):nrow(xsec)){
-    if ((xsec$height_m[i])==(xsec$height_m[j])){
-      levels[i,3] <- xsec$location_m[j]; # Far bank position
-      levels[i,4] <- xsec$location_m[j]-xsec$location_m[i]; # width, which will provide the intervals
-    }
-  }
+     if (xsec$height_m[i]<min_depth){
+          break
+     }
+     levels[i,1]=xsec$height_m[i]; # depth
+     levels[i,2]=xsec$location_m[i]; # Near bank position
+     for (j in (i+1):nrow(xsec)){
+          if ((xsec$height_m[i])==(xsec$height_m[j])){
+               levels[i,3] <- xsec$location_m[j]; # Far bank position
+               levels[i,4] <- xsec$location_m[j]-xsec$location_m[i]; # width, which will provide the intervals
+          }
+     }
 }
 
 if ((calibration_width>min_width)&&(calibration_width<max_width)){

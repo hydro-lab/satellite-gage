@@ -149,12 +149,12 @@ for (i in 1:nrow(temp)){
 
 xsec <- temp[(head+1):foot,]
 rpt <- rpt[(head+1):foot]
-rm(temp)
 xsec <- data.frame(xsec[,1],xsec[,2],rpt)
 xsec <- xsec %>%
      rename(location_m=xsec...1.,height_m=xsec...2.) %>%
      filter(rpt==0) %>%
      select(-rpt)
+rm(temp,rpt)
 
 # Create a table of width intervals (column 4)
 levels <- array(-9999, dim = c(nrow(xsec),4))
@@ -190,7 +190,7 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){ # check valid
         }
       }
       area=(xsec[near,1]-cal_near)*(cal_depth-xsec[near,2])/2;#double check area
-      wp=(((xsec[near,1]-cal_near)^2)+(cal_depth-xsec[near,2])^2)^(1/2);
+      wp=(((xsec[near,1]-cal_near)^2)+(cal_depth-xsec[near,2])^2)^(1/2); # wetted perimeter
       for (j in near:(far-1)){
         area=area+(xsec[(j+1),1]-xsec[j,1])*((cal_depth-xsec[(j+1),2])+(cal_depth-xsec[j,2]))/2;
         wp=wp+((xsec[(j+1),1]-xsec[j,1])^2+(xsec[(j+1),2]-xsec[j,2])^2)^(1/2);
@@ -208,20 +208,17 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){ # check valid
 }
 
 widths <- read_csv("width.csv") # (7) $dt, $filename, $ndwi_threshold_3, $ndwi_threshold_2, $left_m, $right_m, $width_m
-
-# now, the data is in a dataframe called wid.
-dataout <- array(-9, dim=c(nrow(wid), 4))
-#[date,wid]=textread(widths,'%s %f','headerlines',widths_headerlines);
-q <- array(0, dim = c(nrow(wid),1))
-#fo=fopen(data,'a');
-#fprintf(fo,'width, area, hydraulic_radius, discharge\n');
-#fprintf(fo,'(m), (m^2), (m), (m^3s^-1)\n');
-for (k in 1:(nrow(wid))){
+# now, the data are in a dataframe called widths.
+dt <- widths$dt
+width <- widths$width_m
+q <- array(NA, dim = nrow(widths))
+for (k in 1:(nrow(widths))){
+     if (is.na(widths$width_m[k])==FALSE) {
   for (i in 2:nrow(levels)){
-    if ((levels[(i-1),4]>wid$width_m[k])&(wid$width_m[k]>=levels[i,4])){
-      wid_depth=levels[i-1,1]-(levels[i-1,4]-wid$width_m[k])*(levels[i-1,1]-levels[i,1])/(levels[i-1,4]-levels[i,4]);
-      wid_near=levels[i-1,2]-(levels[i-1,4]-wid$width_m[k])*(levels[i-1,2]-levels[i,2])/(levels[i-1,4]-levels[i,4]);
-      wid_far=levels[i-1,3]-(levels[i-1,4]-wid$width_m[k])*(levels[i-1,3]-levels[i,3])/(levels[i-1,4]-levels[i,4]);
+    if ((levels[(i-1),4]>widths$width_m[k])&(widths$width_m[k]>=levels[i,4])){
+      wid_depth=levels[i-1,1]-(levels[i-1,4]-widths$width_m[k])*(levels[i-1,1]-levels[i,1])/(levels[i-1,4]-levels[i,4]);
+      wid_near=levels[i-1,2]-(levels[i-1,4]-widths$width_m[k])*(levels[i-1,2]-levels[i,2])/(levels[i-1,4]-levels[i,4]);
+      wid_far=levels[i-1,3]-(levels[i-1,4]-widths$width_m[k])*(levels[i-1,3]-levels[i,3])/(levels[i-1,4]-levels[i,4]);
       for (j in 2:nrow(levels)){
         if ((xsec[j-1,2]>wid_depth)&(wid_depth>=xsec[j,2])){
           near=j;
@@ -240,44 +237,23 @@ for (k in 1:(nrow(wid))){
       }
       area <- area+((wid_far-xsec[far,1])*(wid_depth-xsec[far,2])/2);
       wp <- wp+((wid_far-xsec[far,1])^2+(wid_depth-xsec[far,2])^2)^(1/2);
-      dataout[k,1] <- area
     }
   }
   R_H=area/wp;
   Q=area*(R_H^(2/3))*(S_0^(1/2))/n;
-  if (wid$width_m[k]<min_width){
+  if (widths$width_m[k]<min_width){
     R_H=-8;
     area=-8;
     Q=-8;
   }
-  if (wid$width_m[k]>max_width){
+  if (widths$width_m[k]>max_width){
     R_H=-9;
     area=-9;
     Q=-9;
   }
-  
-  q[k,1]=Q; 
-  dataout[k,2] <- (wid$width_m[k])
-  dataout[k,3] <- R_H
-  dataout[k,4] <- (wid$filename[k])
-  # wid(k),area,R_H,Q);
+  q[k]=Q
+     }
 }
-
-Cr <- c(area)
-Hr <- c(R_H)
-Ff <- c(n)
-Miaw <- c(min_width)
-Micd <- c(min_depth)
-Maw <- c(max_width)
-Mcd <- c(max_depth)
-specs <- data.frame(Cr, Hr, Ff, Miaw, Micd, Maw, Mcd)
-names(specs)[1] <- "Cross-sectional area at calibration"
-names(specs)[2] <- "Hydraulic radius at calibration"
-names(specs)[3] <- "Friction factor (Manning)"
-names(specs)[4] <- "Minimum allowable width"
-names(specs)[5] <- "Minimum corresponding depth"
-names(specs)[6] <- "Maximum allowable width"
-names(specs)[7] <- "Maximum corresponding depth"
 
 flowoutput <- data.frame(dataout, q)
 names(flowoutput)[1] <- "Cross-sectional area at calibration"

@@ -255,12 +255,6 @@ for (k in 1:(nrow(widths))){
      }
 }
 
-flowoutput <- data.frame(dataout, q)
-names(flowoutput)[1] <- "Cross-sectional area at calibration"
-names(flowoutput)[2] <- "Width"
-names(flowoutput)[3] <- "Hydraulic radius"
-names(flowoutput)[4] <- "Date/Filename"
-names(flowoutput)[5] <- "Flow (Q)"
-
-write.table(flowoutput, file = "flowoutput.csv", append = TRUE, sep = ",", dec = ".", row.names = FALSE, col.names = TRUE)
+satellite.gage <- data.frame(dt,width,q)
+write_csv(satellite.gage, "sat_gage.csv")
 

@@ -159,20 +159,21 @@ xsec <- xsec %>%
 # Create a table of width intervals (column 4)
 levels <- array(-9999, dim = c(nrow(xsec),4))
 for (i in 1:(nrow(xsec)-1)) {
-     if (xsec$height_m[i]<=min_depth) {
-          break
-     }
      levels[i,1]=xsec$height_m[i] # depth
      levels[i,2]=xsec$location_m[i] # Near bank position
-     for (j in (i+1):nrow(xsec)) {
+     for (j in i:nrow(xsec)) { # starts at i in case it is a singular minimum point
           if ((xsec$height_m[i])==(xsec$height_m[j])) {
                levels[i,3] <- xsec$location_m[j] # Far bank position
                levels[i,4] <- xsec$location_m[j]-xsec$location_m[i] # width, which will provide the intervals
           }
      }
+     if (xsec$height_m[i]<=min_depth) { # at, or below, the lowest
+          break
+     }
 }
+levels <- levels[1:i,]
 
-if ((calibration_width>min_width)&&(calibration_width<max_width)){
+if ((calibration_width>min_width)&&(calibration_width<max_width)){ # check valid calibration values
   for (i in 2:(nrow(levels))){
     if ((levels[i-1,4]>calibration_width)&(calibration_width>=levels[i,4])){
       cal_depth=levels[(i-1),1]-(levels[(i-1),4]-calibration_width)*(levels[(i-1),1]-levels[i,1])/(levels[(i-1),4]-levels[i,4]);
@@ -200,7 +201,7 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){
   }
   
   R_H=area/wp;
-  n=area*(R_H^(2/3))*(S_0^(1/2))/calibration_discharge;
+  n=area*(R_H^(2/3))*(S_0^(1/2))/calibration_discharge # Manning's n
   
 }else{
   print("calibration failed")

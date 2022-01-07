@@ -172,8 +172,8 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           }
           
           # set error values for the result vectors in case neither two nor three peaks are found:
-          threepeak <- -9999
-          twopeak <- -9999
+          threepeak <- -1 # revised error values so the histogram visualization is acceptable; however, after debugging, should go back to -9999
+          twopeak <- -1
           
           for (w in 1:10){
                # testing in three peaks
@@ -222,16 +222,18 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           }
           
           # Used in issue #1: Recheck histogram values.  Will comment out after diagnostics
-          h <- ggplot(ndwi) +
-               geom_histogram(breaks = (c(0:200)/100-1), color = "black", fill = "gray") +
-               geom_vline(aes(xintercept = twopeak), color = "green") +
+          ndwi_values <- data.frame(ndwi@data@values)
+          ndwi_values <- rename(ndwi_values, data=ndwi.data.values)
+          h <- ggplot(ndwi_values, aes(x=data)) +
+               geom_histogram(breaks = (c(0:200)/100-1), color = "black", fill = "gray", na.rm = TRUE) +
+               #geom_vline(aes(xintercept = twopeak), color = "green") +
                geom_vline(aes(xintercept = threepeak), color = "blue") +
                xlab("NDWI") +
                ylab("Count") +
                theme(panel.background = element_rect(fill = "white", colour = "black")) +
                theme(aspect.ratio = 1) +
                theme(axis.text = element_text(face = "plain", size = 12))
-          ggsave(paste0(root,"hist.eps"), h, device = "jpeg", dpi = 72)
+          ggsave(paste0(root,"hist.eps"), h, device = "eps", dpi = 72)
           
           # Water's Edge LOOP ENDS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           

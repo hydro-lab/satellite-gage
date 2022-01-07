@@ -207,7 +207,7 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){ # check valid
   print("calibration failed")
 }
 
-widths <- read_csv("width.csv") # (7) $dt, $filename, $ndwi_threshold_3, $ndwi_threshold_2, $left_m, $right_m, $width_m
+widths <- read_csv("widths.csv") # (7) $dt, $filename, $ndwi_threshold_3, $ndwi_threshold_2, $left_m, $right_m, $width_m
 # now, the data are in a dataframe called widths.
 dt <- widths$dt
 width <- widths$width_m

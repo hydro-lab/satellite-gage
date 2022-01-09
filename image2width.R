@@ -110,7 +110,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
      crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
      # Mutale River downstream
      #e <- as(extent( , , , ), 'SpatialPolygons')
-     #crs(e) <- "+proj=longlat +datum=WGS84"
+     #crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
      # Set extent from the Planet file !! This is the area from the picture
      test <- as(extent(pic), 'SpatialPolygons') # Extent of image
      crs(test) <- "+proj=utm +zone=17 +datum=WGS84"

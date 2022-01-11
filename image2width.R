@@ -11,7 +11,7 @@
 # Run in command line as: Rscript image2width.R
 
 # Raster calculation to crop Geotiff, also pulls XML metadata: reflectance coefficient (ps:reflectanceCoefficient)
-library(rgdal)
+library(rgdal) # must change to GDAL and PROJ: sf/stars/terra, by 2023
 library(raster)
 library(rgeos)
 library(XML)

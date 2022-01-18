@@ -109,7 +109,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
      e <- as(extent(609555.5999,609709.1999,4507753.099,4507867.5999 ), 'SpatialPolygons') # Extent needed
      crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
      # Mutale River downstream
-     #e <- as(extent( , , , ), 'SpatialPolygons')
+     #e <- as(extent(245850, 246350, 7478700, 7479200), 'SpatialPolygons')
      #crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
      # Set extent from the Planet file !! This is the area from the picture
      test <- as(extent(pic), 'SpatialPolygons') # Extent of image
@@ -248,7 +248,12 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           y1 <- (4507801.407)
           y2 <- (4507831.586)
           # Mutale River 
-          
+          # Right=(246095.0,7478932.5), remember, 36S
+          # Left =(246072.4,7478992.1)
+          x1 <- (246095.0)
+          x2 <- (246072.4)
+          y1 <- (7478932.5)
+          y2 <- (7478992.1)
           # Slopes:
           ma <- (y2-y1)/(x2-x1)
           #this next part will rely on UTM (the coordinates are in meters)

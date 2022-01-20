@@ -103,6 +103,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
      # Import raster image, crops to chosen extent
      fn <- imagebank$im[q]
      pic <- stack(fn)
+     
      # set extent from QGIS analysis:
      # extent format (xmin,xmax,ymin,ymax)
      # Buffalo Creek:
@@ -111,6 +112,13 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
      # Mutale River downstream
      #e <- as(extent(245850, 246350, 7478700, 7479200), 'SpatialPolygons')
      #crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
+     # Mutale River upstream
+     #e <- as(extent(245850, 246350, 7478700, 7479200), 'SpatialPolygons')
+     #crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
+     # Limpopo River upstream from Xai-Xai
+     #e <- as(extent(557000, 559000, 7256250, 7258250), 'SpatialPolygons')
+     #crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
+     
      # Set extent from the Planet file !! This is the area from the picture
      test <- as(extent(pic), 'SpatialPolygons') # Extent of image
      crs(test) <- "+proj=utm +zone=17 +datum=WGS84"
@@ -243,17 +251,32 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           # Buffalo Creek
           # RDB=(609589.376, 4507801.407)
           # LDB=(609634.607, 4507831.586)
-          x1 <- (609589.376)
-          x2 <- (609634.607)
-          y1 <- (4507801.407)
-          y2 <- (4507831.586)
-          # Mutale River 
+          #x1 <- (609589.376)
+          #x2 <- (609634.607)
+          #y1 <- (4507801.407)
+          #y2 <- (4507831.586)
+          # Mutale River downstream
           # Right=(246095.0,7478932.5), remember, 36S
           # Left =(246072.4,7478992.1)
           x1 <- (246095.0)
           x2 <- (246072.4)
           y1 <- (7478932.5)
           y2 <- (7478992.1)
+          # Mutale River upstream
+          # Right=(246095.0,7478932.5), 36S
+          # Left =(246072.4,7478992.1)
+          #x1 <- (246095.0)
+          #x2 <- (246072.4)
+          #y1 <- (7478932.5)
+          #y2 <- (7478992.1)
+          # Limpopo River above Xai-Xai 
+          # Right=(557829.8,7257242.8), 36S
+          # Left =(557988.6,7257355.2)
+          #x1 <- (557829.8)
+          #x2 <- (557988.6)
+          #y1 <- (7257242.8)
+          #y2 <- (7257355.2)
+          
           # Slopes:
           ma <- (y2-y1)/(x2-x1)
           #this next part will rely on UTM (the coordinates are in meters)

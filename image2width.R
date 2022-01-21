@@ -107,8 +107,8 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
      # set extent from QGIS analysis:
      # extent format (xmin,xmax,ymin,ymax)
      # Buffalo Creek:
-     e <- as(extent(609555.5999,609709.1999,4507753.099,4507867.5999 ), 'SpatialPolygons') # Extent needed
-     crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
+     #e <- as(extent(609555.5999,609709.1999,4507753.099,4507867.5999 ), 'SpatialPolygons') # Extent needed
+     #crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
      # Mutale River downstream
      #e <- as(extent(245850, 246350, 7478700, 7479200), 'SpatialPolygons')
      #crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
@@ -116,12 +116,13 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
      #e <- as(extent(245850, 246350, 7478700, 7479200), 'SpatialPolygons')
      #crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
      # Limpopo River upstream from Xai-Xai
-     #e <- as(extent(557000, 559000, 7256250, 7258250), 'SpatialPolygons')
-     #crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
+     e <- as(extent(557000, 559000, 7256250, 7258250), 'SpatialPolygons')
+     crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
      
      # Set extent from the Planet file !! This is the area from the picture
      test <- as(extent(pic), 'SpatialPolygons') # Extent of image
-     crs(test) <- "+proj=utm +zone=17 +datum=WGS84"
+     #crs(test) <- "+proj=utm +zone=17 +datum=WGS84"
+     crs(test) <- "+proj=utm +zone=36 +datum=WGS84"
      if (gCovers(test,e)) { # returns TRUE if no point in spgeom2 (e, needed) is outside spgeom1 (test, image extent) # used to be (gWithin(e, test, byid = FALSE))
           r <- crop(pic, e)
           rm(pic) # remove rest of image from RAM
@@ -232,16 +233,18 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           # Used in issue #1: Recheck histogram values.  Will comment out after diagnostics
           ndwi_values <- data.frame(ndwi@data@values)
           ndwi_values <- rename(ndwi_values, data=ndwi.data.values)
-          h <- ggplot(ndwi_values, aes(x=data)) +
-               geom_histogram(breaks = (c(0:200)/100-1), color = "black", fill = "gray", na.rm = TRUE) +
-               #geom_vline(aes(xintercept = twopeak), color = "green") +
-               geom_vline(aes(xintercept = threepeak), color = "blue") +
-               xlab("NDWI") +
-               ylab("Count") +
-               theme(panel.background = element_rect(fill = "white", colour = "black")) +
-               theme(aspect.ratio = 1) +
-               theme(axis.text = element_text(face = "plain", size = 12))
-          ggsave(paste0(root,"hist.eps"), h, device = "eps", dpi = 72)
+          
+          # HISTOGRAM VISUALIZATION
+          # h <- ggplot(ndwi_values, aes(x=data)) +
+          #      geom_histogram(breaks = (c(0:200)/100-1), color = "black", fill = "gray", na.rm = TRUE) +
+          #      geom_vline(aes(xintercept = twopeak), color = "green") +
+          #      geom_vline(aes(xintercept = threepeak), color = "blue") +
+          #      xlab("NDWI") +
+          #      ylab("Count") +
+          #      theme(panel.background = element_rect(fill = "white", colour = "black")) +
+          #      theme(aspect.ratio = 1) +
+          #      theme(axis.text = element_text(face = "plain", size = 12))
+          # ggsave(paste0(root,"hist.eps"), h, device = "eps", dpi = 72)
           
           # Water's Edge LOOP ENDS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           
@@ -258,10 +261,10 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           # Mutale River downstream
           # Right=(246095.0,7478932.5), remember, 36S
           # Left =(246072.4,7478992.1)
-          x1 <- (246095.0)
-          x2 <- (246072.4)
-          y1 <- (7478932.5)
-          y2 <- (7478992.1)
+          #x1 <- (246095.0)
+          #x2 <- (246072.4)
+          #y1 <- (7478932.5)
+          #y2 <- (7478992.1)
           # Mutale River upstream
           # Right=(246095.0,7478932.5), 36S
           # Left =(246072.4,7478992.1)
@@ -272,10 +275,10 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           # Limpopo River above Xai-Xai 
           # Right=(557829.8,7257242.8), 36S
           # Left =(557988.6,7257355.2)
-          #x1 <- (557829.8)
-          #x2 <- (557988.6)
-          #y1 <- (7257242.8)
-          #y2 <- (7257355.2)
+          x1 <- (557829.8)
+          x2 <- (557988.6)
+          y1 <- (7257242.8)
+          y2 <- (7257355.2)
           
           # Slopes:
           ma <- (y2-y1)/(x2-x1)

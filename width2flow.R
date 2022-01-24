@@ -16,9 +16,9 @@ library(dplyr)
 # Remember to set working directory
 
 # Channel-specific information
-calibration_discharge <- 4.567 # discharge, cubic meters per second
-calibration_width <- 27.65 # width, meters
-S_0 <- 0.0167 # slope, dimensionless
+calibration_discharge <- 0.28 # discharge, cubic meters per second
+calibration_width <- 4.5 # width, meters
+S_0 <- 0.002 # slope, dimensionless
 
 profile <- read_csv("profile.csv") # (2) $location_m and $height_m
 if (mean(profile$height_m)>0){ # guesses if the average height is positive, that the height vector points down

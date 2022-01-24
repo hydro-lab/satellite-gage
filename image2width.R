@@ -87,6 +87,7 @@ imagebank <- imagebank %>%
 registerDoParallel(detectCores())
 #widths <- foreach (q = 1:2, .combine = 'rbind') %dopar% { # testing loop,
 widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # parallel computing loop: this changes how data are transferred back from each operation.
+     output <- array(NA, dim = 7) # output array - will be filled in if data are valid
      
      #Import raw Planet metadata to get the reflectance coefficients
      fn <- imagebank$md[q]
@@ -143,7 +144,6 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           #             format = "GTiff", # save as a tif, save as a FLOAT if not default, not integer
           #             overwrite = TRUE)  # OPTIONAL - be careful. This will OVERWRITE previous files.
           
-          output <- array(NA, dim = 7)
           output[1] <- date(as_datetime(imagebank$dt[q]))
           output[2] <- root #for output file: root name of image
           
@@ -299,6 +299,15 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           
           spat <- SpatialPoints(pointers)
           
+          # Testing three-peak and two-peak water threshold
+          # Three-peak is theoretically superior; however, is not always found or there are problems (e.g., =-1) 
+          # when it is found.  Test to determine if three-peak threshold is acceptable, otherwise, use two-peak.
+          if ((threepeak > -0.65) & (threepeak < 0.4)) {
+               ndwi_threshold <- threepeak
+          } else {
+               ndwi_threshold <- twopeak # consider QC on two-peaks and a default value with QC flag
+          }
+          
           alng <- extract(ndwi, spat, method='simple')
           # plot(alng, xlab="Position along transect", ylab="NDWI")
           # To export table or NDWI v. position as a new file
@@ -337,26 +346,26 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           }
           
           for (i in (2:f)){
-               if (alng_per[i,2]>threepeak){
-                    if (alng_per[i-1,2]<threepeak){
+               if (alng_per[i,2]>ndwi_threshold){
+                    if (alng_per[i-1,2]<ndwi_threshold){
                          i1 <- alng_per[i-1,1]
                          i2 <- alng_per[i,1]
                          j1 <- alng_per[i-1,2]
                          j2 <- alng_per[i,2]
-                         n <- threepeak    
+                         n <- ndwi_threshold    
                          RDB <- ((n-(j1))*((i2-i1)/(j2-j1))+i1)
                          break
                     }
                }
           }
           for (i in 1:(f-1)){
-               if (alng_per[f-i,2]>threepeak){        #expressing the index such that when i = 1, f, and when i = 2, f-1.
-                    if (alng_per[f-i+1,2]<threepeak){
+               if (alng_per[f-i,2]>ndwi_threshold){        #expressing the index such that when i = 1, f, and when i = 2, f-1.
+                    if (alng_per[f-i+1,2]<ndwi_threshold){
                          i1 <- alng_per[f-i+1,1]
                          i2 <- alng_per[f-1,1]
                          j1 <- alng_per[f-i+1,2]
                          j2 <- alng_per[f-1,2]
-                         n <- threepeak    
+                         n <- ndwi_threshold    
                          LDB <- ((n-(j1))*((i2-i1)/(j2-j1))+i1)
                          break
                     }

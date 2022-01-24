@@ -88,6 +88,7 @@ registerDoParallel(detectCores())
 #widths <- foreach (q = 1:2, .combine = 'rbind') %dopar% { # testing loop,
 widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # parallel computing loop: this changes how data are transferred back from each operation.
      output <- array(NA, dim = 7) # output array - will be filled in if data are valid
+     output[1] <- date(as_datetime(imagebank$dt[q]))
      
      #Import raw Planet metadata to get the reflectance coefficients
      fn <- imagebank$md[q]
@@ -107,18 +108,18 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
      
      # set extent from QGIS analysis:
      # extent format (xmin,xmax,ymin,ymax)
-     # Buffalo Creek:
+     ## Buffalo Creek:
      #e <- as(extent(609555.5999,609709.1999,4507753.099,4507867.5999 ), 'SpatialPolygons') # Extent needed
      #crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
-     # Mutale River downstream
-     #e <- as(extent(245850, 246350, 7478700, 7479200), 'SpatialPolygons')
-     #crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
-     # Mutale River upstream
-     #e <- as(extent(245850, 246350, 7478700, 7479200), 'SpatialPolygons')
-     #crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
-     # Limpopo River upstream from Xai-Xai
-     e <- as(extent(557000, 559000, 7256250, 7258250), 'SpatialPolygons')
+     ## Mutale River downstream
+     e <- as(extent(245850, 246350, 7478700, 7479200), 'SpatialPolygons')
      crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
+     ## Mutale River upstream
+     #e <- as(extent(245850, 246350, 7478700, 7479200), 'SpatialPolygons')
+     #crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
+     ## Limpopo River upstream from Xai-Xai
+     #e <- as(extent(557000, 559000, 7256250, 7258250), 'SpatialPolygons')
+     #crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
      
      # Set extent from the Planet file !! This is the area from the picture
      test <- as(extent(pic), 'SpatialPolygons') # Extent of image
@@ -144,7 +145,6 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           #             format = "GTiff", # save as a tif, save as a FLOAT if not default, not integer
           #             overwrite = TRUE)  # OPTIONAL - be careful. This will OVERWRITE previous files.
           
-          output[1] <- date(as_datetime(imagebank$dt[q]))
           output[2] <- root #for output file: root name of image
           
           # This code finds the boundary of the water in a normalized difference water index 
@@ -261,10 +261,10 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           # Mutale River downstream
           # Right=(246095.0,7478932.5), remember, 36S
           # Left =(246072.4,7478992.1)
-          #x1 <- (246095.0)
-          #x2 <- (246072.4)
-          #y1 <- (7478932.5)
-          #y2 <- (7478992.1)
+          x1 <- (246095.0)
+          x2 <- (246072.4)
+          y1 <- (7478932.5)
+          y2 <- (7478992.1)
           # Mutale River upstream
           # Right=(246095.0,7478932.5), 36S
           # Left =(246072.4,7478992.1)
@@ -275,10 +275,10 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           # Limpopo River above Xai-Xai 
           # Right=(557829.8,7257242.8), 36S
           # Left =(557988.6,7257355.2)
-          x1 <- (557829.8)
-          x2 <- (557988.6)
-          y1 <- (7257242.8)
-          y2 <- (7257355.2)
+          #x1 <- (557829.8)
+          #x2 <- (557988.6)
+          #y1 <- (7257242.8)
+          #y2 <- (7257355.2)
           
           # Slopes:
           ma <- (y2-y1)/(x2-x1)

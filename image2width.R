@@ -261,10 +261,10 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           # Mutale River downstream
           # Right=(246095.0,7478932.5), remember, 36S
           # Left =(246072.4,7478992.1)
-          x1 <- (246095.0)
-          x2 <- (246072.4)
-          y1 <- (7478932.5)
-          y2 <- (7478992.1)
+          x1 <- (246130)
+          x2 <- (246066)
+          y1 <- (7478894)
+          y2 <- (7479006)
           # Mutale River upstream
           # Right=(246095.0,7478932.5), 36S
           # Left =(246072.4,7478992.1)

@@ -27,6 +27,7 @@ library(readr)
 library(ggplot2)
 
 # remember to set working directory if needed
+setwd("/Volumes/T7/planet/mutale/data/")
 
 # Lists for necessary files
 # Image list

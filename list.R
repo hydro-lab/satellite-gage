@@ -9,11 +9,15 @@
 # https://github.com/LimpopoLab 
 
 library(stringr)
+library(dplyr)
 library(lubridate)
 library(readr)
 library(parallel)
+library(doParallel)
+library(raster)
+library(rgeos)
 
-im <- list.files("/Volumes/T7/planet/mutale/data/", 
+im <- list.files("/Volumes/T7/planet/mutale/data", 
                  pattern = "*AnalyticMS.tif$", 
                  full.names = TRUE, 
                  recursive = TRUE, 
@@ -30,7 +34,7 @@ for (i in 1:length(im)) {
 }
 
 # Metadata List
-md <- list.files("./", 
+md <- list.files("/Volumes/T7/planet/mutale/data", 
                  pattern = "*AnalyticMS_metadata.xml$", 
                  full.names = TRUE, 
                  recursive = TRUE, 
@@ -62,7 +66,7 @@ imagebank <- imagebank %>%
      filter(is.na(md)==FALSE) # will contain imagebank data frame with date (dt), image (im), and metadata (md)
 
 registerDoParallel(detectCores())
-widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% {
+valid <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% {
      fn <- imagebank$im[q]
      pic <- stack(fn)
      e <- as(extent(245850, 246350, 7478700, 7479200), 'SpatialPolygons')
@@ -72,4 +76,6 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% {
      print(gCovers(test,e))
 }
 
+dt1 <- as.character(as_datetime(imagebank$dt))
+imagebank <- data.frame(dt1, imagebank, valid)
 write_csv(imagebank, "imagelist.csv")

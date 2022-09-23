@@ -31,7 +31,7 @@ setwd("/Volumes/T7/planet/mutale/data/")
 
 # Lists for necessary files
 # Image list
-im <- list.files("./", 
+im <- list.files(".", 
                  pattern = "*AnalyticMS.tif$", 
                  full.names = TRUE, 
                  recursive = TRUE, 
@@ -48,7 +48,7 @@ for (i in 1:length(im)) {
 }
 
 # Metadata List
-md <- list.files("./", 
+md <- list.files(".", 
                 pattern = "*AnalyticMS_metadata.xml$", 
                 full.names = TRUE, 
                 recursive = TRUE, 

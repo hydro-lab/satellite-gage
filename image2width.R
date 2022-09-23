@@ -88,7 +88,7 @@ imagebank <- imagebank %>%
 registerDoParallel(detectCores())
 #widths <- foreach (q = 1:2, .combine = 'rbind') %dopar% { # testing loop,
 widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # parallel computing loop: this changes how data are transferred back from each operation.
-     output <- array(NA, dim = 7) # output array - will be filled in if data are valid
+     output <- array(NA, dim = 9) # output array - will be filled in if data are valid
      output[1] <- date(as_datetime(imagebank$dt[q]))
      
      #Import raw Planet metadata to get the reflectance coefficients
@@ -184,6 +184,8 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           # set error values for the result vectors in case neither two nor three peaks are found:
           threepeak <- -1 # revised error values so the histogram visualization is acceptable; however, after debugging, should go back to -9999
           twopeak <- -1
+          threemid <- -1
+          twomid <- -1
           
           for (w in 1:10){
                # testing in three peaks
@@ -207,6 +209,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
                          }
                     }
                     threepeak <- (bins[(goal)])
+                    threemid <- (bins[sec] + bins[thr]) / 2
                }
                # test in case exactly three peaks were not found
                if ((nop[w])==2){
@@ -228,6 +231,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
                          }
                     }
                     twopeak <- (bins[(goal)])
+                    twomid <- (bins[sec] + bins[thr]) / 2
                }
           }
           
@@ -249,8 +253,10 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           
           # Water's Edge LOOP ENDS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           
-          output[3] <-threepeak #for output file: value for the edge of water (3 peak)
-          output[4] <-twopeak #for output file: value for the edge of water (2 peak)
+          output[3] <- threepeak #for output file: value for the edge of water (3 peak)
+          output[4] <- threemid
+          output[5] <- twopeak #for output file: value for the edge of water (2 peak)
+          output[6] <- twomid
           
           # Buffalo Creek
           # RDB=(609589.376, 4507801.407)

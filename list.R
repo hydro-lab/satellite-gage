@@ -8,7 +8,7 @@
 # www.duq.edu/limpopo 
 # https://github.com/LimpopoLab 
 
-
+library(stringr)
 library(lubridate)
 library(readr)
 library(parallel)

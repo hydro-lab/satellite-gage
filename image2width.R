@@ -303,8 +303,9 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           # Testing three-peak and two-peak water threshold
           # Three-peak is theoretically superior; however, is not always found or there are problems (e.g., =-1) 
           # when it is found.  Test to determine if three-peak threshold is acceptable, otherwise, use two-peak.
-          if ((threepeak > -0.65) & (threepeak < 0.4)) {
-               ndwi_threshold <- threepeak
+          ndwi_threshold <- NA
+          if ((is.na(threepeak)==FALSE) & (threepeak > -0.65) & (threepeak < 0.4)) {
+                    ndwi_threshold <- threepeak
           } else {
                ndwi_threshold <- twopeak # consider QC on two-peaks and a default value with QC flag
           }
@@ -322,7 +323,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           for (j in 1:f){
                cnt <- 1
                for (i in restart:f) {
-                    if (is.na(alng[i])==FALSE) {
+                    if ((is.na(alng[i])==FALSE) & (is.na(alng[i-1])==FALSE)) {
                          if (alng[i]==alng[i-1]) { # determines if the next value is equal
                               cnt <- cnt + 1 # counts how many values there are
                          } else {

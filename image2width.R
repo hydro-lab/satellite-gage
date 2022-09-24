@@ -182,10 +182,10 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           }
           
           # set error values for the result vectors in case neither two nor three peaks are found:
-          threepeak <- -1 # revised error values so the histogram visualization is acceptable; however, after debugging, should go back to -9999
-          twopeak <- -1
-          threemid <- -1
-          twomid <- -1
+          threepeak <- 1 # revised error values so the histogram visualization is acceptable; however, after debugging, should go back to -9999
+          twopeak <- 1
+          threemid <- 1
+          twomid <- 1
           
           for (w in 1:10){
                # testing in three peaks
@@ -307,13 +307,12 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           spat <- SpatialPoints(pointers)
           
           # Testing three-peak and two-peak water threshold
-          # Three-peak is theoretically superior; however, is not always found or there are problems (e.g., =-1) 
-          # when it is found.  Test to determine if three-peak threshold is acceptable, otherwise, use two-peak.
-          ndwi_threshold <- NA
-          if ((is.na(threepeak)==FALSE) & (threepeak > -0.65) & (threepeak < 0.4)) {
-                    ndwi_threshold <- threepeak
-          } else {
-               ndwi_threshold <- twopeak # consider QC on two-peaks and a default value with QC flag
+          options <- sort(c(threepeak, threemid, twopeak, twomid), decreasing = TRUE)
+          ndwi_threshold <- 1
+          for (i in 1:4) {
+               if (ndwi_threshold < -0.65) {
+                    ndwi_threshold <- options[i]
+               }
           }
           
           alng <- extract(ndwi, spat, method='simple')

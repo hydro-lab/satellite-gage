@@ -243,13 +243,32 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           # h <- ggplot(ndwi_values, aes(x=data)) +
           #      geom_histogram(breaks = (c(0:200)/100-1), color = "black", fill = "gray", na.rm = TRUE) +
           #      geom_vline(aes(xintercept = twopeak), color = "green") +
+          #      geom_vline(aes(xintercept = twomid), color = "green") +
           #      geom_vline(aes(xintercept = threepeak), color = "blue") +
+          #      geom_vline(aes(xintercept = threemid), color = "green") +
           #      xlab("NDWI") +
           #      ylab("Count") +
           #      theme(panel.background = element_rect(fill = "white", colour = "black")) +
           #      theme(aspect.ratio = 1) +
           #      theme(axis.text = element_text(face = "plain", size = 12))
           # ggsave(paste0(root,"hist.eps"), h, device = "eps", dpi = 72)
+          
+          # AVERAGING VISUALIZATION
+          win <- 5 # the location of the averaging window in avg variable; lower number is small window, larger is smoother
+          troubleshoot <- data.frame(bins,avg[,win])
+          troubleshoot <- rename(troubleshoot, avg = `avg...win.`) # may need to update original variable
+          ggplot(troubleshoot) +
+               geom_line(aes(x=bins,y=avg)) +
+               geom_vline(aes(xintercept=bins[which(peaks[,win]==1)]), color = "red") +
+               geom_vline(aes(xintercept=bins[which(peaks[,win]==2)]), color = "red") +
+               #geom_vline(aes(xintercept=bins[which(peaks[,win]==3)]), color = "red") +
+               xlab("NDWI") +
+               ylab("Count") +
+               theme(panel.background = element_rect(fill = "white", colour = "black")) +
+               theme(aspect.ratio = 1) +
+               theme(axis.text = element_text(face = "plain", size = 12))
+          # ggsave(paste0(root,"avg_win.eps"), wa, device = "eps", dpi = 72)
+          # POSSIBLE: could consider averaging window 5, larger averages
           
           # Water's Edge LOOP ENDS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           
@@ -310,7 +329,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           options <- sort(c(threepeak, threemid, twopeak, twomid), decreasing = TRUE)
           ndwi_threshold <- 1
           for (i in 1:4) {
-               if (ndwi_threshold < -0.65) {
+               if (options[i] > -0.65) {
                     ndwi_threshold <- options[i]
                }
           }

@@ -262,6 +262,8 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
                geom_vline(aes(xintercept=bins[which(peaks[,win]==1)]), color = "red") +
                geom_vline(aes(xintercept=bins[which(peaks[,win]==2)]), color = "red") +
                #geom_vline(aes(xintercept=bins[which(peaks[,win]==3)]), color = "red") +
+               #geom_vline(aes(xintercept=bins[which(peaks[,win]==4)]), color = "red") +
+               #geom_vline(aes(xintercept=bins[which(peaks[,win]==5)]), color = "red") +
                xlab("NDWI") +
                ylab("Count") +
                theme(panel.background = element_rect(fill = "white", colour = "black")) +

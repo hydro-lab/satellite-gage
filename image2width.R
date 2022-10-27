@@ -181,6 +181,19 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
                }
           }
           
+          # AVERAGING VISUALIZATION
+          win <- 1 # the location of the averaging window in avg variable; lower number is small window, larger is smoother
+          troubleshoot <- data.frame(bins,avg[,win])
+          troubleshoot <- rename(troubleshoot, avg = `avg...win.`) # may need to update original variable
+          ggplot(troubleshoot) +
+               geom_line(aes(x=bins,y=avg)) +
+               geom_vline(aes(xintercept=-0.3), color="Blue") +
+               xlab("NDWI") +
+               ylab("Count") +
+               theme(panel.background = element_rect(fill = "white", colour = "black")) +
+               theme(aspect.ratio = 1) +
+               theme(axis.text = element_text(face = "plain", size = 12))
+          
           # set error values for the result vectors in case neither two nor three peaks are found:
           threepeak <- 1 # revised error values so the histogram visualization is acceptable; however, after debugging, should go back to -9999
           twopeak <- 1
@@ -246,6 +259,8 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           #      geom_vline(aes(xintercept = twomid), color = "green") +
           #      geom_vline(aes(xintercept = threepeak), color = "blue") +
           #      geom_vline(aes(xintercept = threemid), color = "green") +
+          #      xlim(c(-1,1)) +
+          #      ylim(c(0,2000)) +
           #      xlab("NDWI") +
           #      ylab("Count") +
           #      theme(panel.background = element_rect(fill = "white", colour = "black")) +
@@ -254,21 +269,21 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           # ggsave(paste0(root,"hist.eps"), h, device = "eps", dpi = 72)
           
           # AVERAGING VISUALIZATION
-          win <- 5 # the location of the averaging window in avg variable; lower number is small window, larger is smoother
-          troubleshoot <- data.frame(bins,avg[,win])
-          troubleshoot <- rename(troubleshoot, avg = `avg...win.`) # may need to update original variable
-          ggplot(troubleshoot) +
-               geom_line(aes(x=bins,y=avg)) +
-               geom_vline(aes(xintercept=bins[which(peaks[,win]==1)]), color = "red") +
-               geom_vline(aes(xintercept=bins[which(peaks[,win]==2)]), color = "red") +
-               #geom_vline(aes(xintercept=bins[which(peaks[,win]==3)]), color = "red") +
-               #geom_vline(aes(xintercept=bins[which(peaks[,win]==4)]), color = "red") +
-               #geom_vline(aes(xintercept=bins[which(peaks[,win]==5)]), color = "red") +
-               xlab("NDWI") +
-               ylab("Count") +
-               theme(panel.background = element_rect(fill = "white", colour = "black")) +
-               theme(aspect.ratio = 1) +
-               theme(axis.text = element_text(face = "plain", size = 12))
+          # win <- 5 # the location of the averaging window in avg variable; lower number is small window, larger is smoother
+          # troubleshoot <- data.frame(bins,avg[,win])
+          # troubleshoot <- rename(troubleshoot, avg = `avg...win.`) # may need to update original variable
+          # ggplot(troubleshoot) +
+          #      geom_line(aes(x=bins,y=avg)) +
+          #      geom_vline(aes(xintercept=bins[which(peaks[,win]==1)]), color = "red") +
+          #      geom_vline(aes(xintercept=bins[which(peaks[,win]==2)]), color = "red") +
+          #      #geom_vline(aes(xintercept=bins[which(peaks[,win]==3)]), color = "red") +
+          #      #geom_vline(aes(xintercept=bins[which(peaks[,win]==4)]), color = "red") +
+          #      #geom_vline(aes(xintercept=bins[which(peaks[,win]==5)]), color = "red") +
+          #      xlab("NDWI") +
+          #      ylab("Count") +
+          #      theme(panel.background = element_rect(fill = "white", colour = "black")) +
+          #      theme(aspect.ratio = 1) +
+          #      theme(axis.text = element_text(face = "plain", size = 12))
           # ggsave(paste0(root,"avg_win.eps"), wa, device = "eps", dpi = 72)
           # POSSIBLE: could consider averaging window 5, larger averages
           

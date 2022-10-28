@@ -238,29 +238,33 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           #y1 <- (4507801.407)
           #y2 <- (4507831.586)
           # Mutale River downstream (EPSG: 32736, UTM: 36S)
-          crs <- sp::CRS("+init=epsg:32736")
+          crs <- sp::CRS("+proj=utm +zone=36 +datum=WGS84")
           x1 <- (246130)
           x2 <- (246066)
           y1 <- (7478894)
           y2 <- (7479006)
 
           # Slopes:
-          ma <- (y2-y1)/(x2-x1)
-          #this next part will rely on UTM (the coordinates are in meters)
-          ra <- (0.1) # r is the step size of each point along our width
-          t <- sqrt(((x2-x1)^2)+ ((y2-y1)^2)) # length along search transect
-          f <- ceiling(t/ra)
-          pointers <- array(999.999, dim = c(f,2))
-          pointers[1,1] <- x1
-          pointers[1,2] <- y1
+          m <- (y2-y1)/(x2-x1)
+          # this is in meters (UTM coordinates)
+          dt = 0.1 # step size along transect (m)
+          dx = sqrt((dt^2)/((m^2)+1)) # step size in the x-direction
+          t <- sqrt(((x2-x1)^2) + ((y2-y1)^2)) # length along search transect
+          f <- ceiling(t/dt) # number of steps needed to cross transect
+          
+          transect <- array(999.999, dim = c(f,2)) # [,1] is x, [,2] is y
+          transect[1,1] <- x1
+          transect[1,2] <- y1
           for (i in 2:f){
-               a <- 1
-               b <- (-2)*pointers[i-1,1]
-               c <- (pointers[i-1,1]^2) - (ra^2)/((ma^2)+1)
-               pointers[i,1] <- ((-b)+(sqrt((b^2)-4*a*c)))/(2*a)
-               pointers[i,2] <- ((pointers[i-1,2])+(ma*((pointers[i,1])-(pointers[i-1,1]))))
+               x <- transect[(f-1),1] # last x value
+               y <- transect[(f-1),2] # last y value
+               transect[f,1] <- x + dx # next x value
+               transect[f,2] <- y + (m * (transect[f,1] - x)) # next y value
           }
           
+          endPoints <- SpatialPoints(rbind(c(x1,y1),c(x2,y2)), proj4string = crs)
+          # plot(ndwi)
+          # points(endPoints)
           spat <- SpatialPoints(pointers, proj4string = crs)
 
           alng <- extract(ndwi, spat, method='simple')

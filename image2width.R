@@ -84,9 +84,7 @@ imagebank <- imagebank %>%
 #widths <- array(NA, dim = c((nrow(imagebank)),7))
 #for (q in 1:(2)) { # original loop
 # PARALLEL
-# Replacing loop with a foreach for parallelization
 registerDoParallel(detectCores())
-#widths <- foreach (q = 1:2, .combine = 'rbind') %dopar% { # testing loop,
 widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # parallel computing loop: this changes how data are transferred back from each operation.
      output <- array(NA, dim = 6) # output array - will be filled in if data are valid
      output[1] <- date(as_datetime(imagebank$dt[q])) # to check, use: as_date(output[1])
@@ -240,6 +238,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           #y1 <- (4507801.407)
           #y2 <- (4507831.586)
           # Mutale River downstream (EPSG: 32736, UTM: 36S)
+          crs <- sp::CRS("+init=epsg:32736")
           x1 <- (246130)
           x2 <- (246066)
           y1 <- (7478894)
@@ -262,7 +261,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
                pointers[i,2] <- ((pointers[i-1,2])+(ma*((pointers[i,1])-(pointers[i-1,1]))))
           }
           
-          spat <- SpatialPoints(pointers)
+          spat <- SpatialPoints(pointers, proj4string = crs)
 
           alng <- extract(ndwi, spat, method='simple')
           # plot(alng, xlab="Position along transect", ylab="NDWI")

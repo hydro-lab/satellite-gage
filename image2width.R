@@ -88,18 +88,14 @@ imagebank <- imagebank %>%
 registerDoParallel(detectCores())
 #widths <- foreach (q = 1:2, .combine = 'rbind') %dopar% { # testing loop,
 widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # parallel computing loop: this changes how data are transferred back from each operation.
-     output <- array(NA, dim = 9) # output array - will be filled in if data are valid
-     output[1] <- date(as_datetime(imagebank$dt[q]))
+     output <- array(NA, dim = 6) # output array - will be filled in if data are valid
+     output[1] <- date(as_datetime(imagebank$dt[q])) # to check, use: as_date(output[1])
      
      #Import raw Planet metadata to get the reflectance coefficients
      fn <- imagebank$md[q]
      fl <- xmlParse(fn)
      rc <- setNames(xmlToDataFrame(node=getNodeSet(fl, "//ps:EarthObservation/gml:resultOf/ps:EarthObservationResult/ps:bandSpecificMetadata/ps:reflectanceCoefficient")),"reflectanceCoefficient")
      dm <- as.matrix(rc)
-     # 1 Red
-     # 2 Green
-     # 3 Blue
-     # 4 Near infrared
      rc2 <- as.numeric(dm[2]) # Green
      rc4 <- as.numeric(dm[4]) # NIR
      
@@ -107,7 +103,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
      fn <- imagebank$im[q]
      pic <- stack(fn)
      
-     # set extent from QGIS analysis:
+     # set crop extent from QGIS analysis:
      # extent format (xmin,xmax,ymin,ymax)
      ## Buffalo Creek:
      #e <- as(extent(609555.5999,609709.1999,4507753.099,4507867.5999 ), 'SpatialPolygons') # Extent needed
@@ -115,13 +111,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
      ## Mutale River downstream
      e <- as(extent(245850, 246350, 7478700, 7479200), 'SpatialPolygons')
      crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
-     ## Mutale River upstream
-     #e <- as(extent(245850, 246350, 7478700, 7479200), 'SpatialPolygons')
-     #crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
-     ## Limpopo River upstream from Xai-Xai
-     #e <- as(extent(557000, 559000, 7256250, 7258250), 'SpatialPolygons')
-     #crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
-     
+
      # Set extent from the Planet file !! This is the area from the picture
      test <- as(extent(pic), 'SpatialPolygons') # Extent of image
      #crs(test) <- "+proj=utm +zone=17 +datum=WGS84"
@@ -150,7 +140,6 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           
           # This code finds the boundary of the water in a normalized difference water index 
           # This code uses the cropped, single-layer, NDWI image.  Image based on the histogram of the pixel values.
-          
           # Import raster image, or take it from previous code, set working directory, if needed.
           
           h = hist(ndwi, # built-in histogram function.  To find values only.  Plotting is at the end of this loop.
@@ -160,17 +149,19 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           v <- h$counts # counts        integer
           
           # Allocate arrays used in analysis
-          avg <- array(0, dim = c(200,10))
-          peaks <- array(0, dim = c(200,10))
-          nop <- array(0, dim = c(1,10))
-          for (w in 1:10){
+          maxWindow <- 10 # This is the control on the maximum averaging window AND the size of the following arrays.
+          binNumber <- length(bins)
+          avg <- array(0, dim = c(binNumber,maxWindow))
+          peaks <- array(0, dim = c(binNumber,maxWindow))
+          nop <- array(0, dim = c(1,maxWindow))
+          for (w in 1:maxWindow){
                # filter values (v=h$counts) with the averaging window size 2*w+1
-               for (k in (w+1):(200-w)){
+               for (k in (w+1):(binNumber-w)){
                     avg[k,w] <- ((sum(v[(k-w):(k+w)]))/((2*w)+1))
                }
                # identify and number peaks
                cnt <- 0
-               for (j in (w+1):(200-w)){
+               for (j in (w+1):(binNumber-w)){
                     if ((avg[j-1,w])<(avg[j,w])){
                          if ((avg[j+1,w])<(avg[j,w])){
                               cnt <- (cnt+1)
@@ -182,83 +173,52 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           }
           
           # AVERAGING VISUALIZATION
-          win <- 1 # the location of the averaging window in avg variable; lower number is small window, larger is smoother
-          troubleshoot <- data.frame(bins,avg[,win])
-          troubleshoot <- rename(troubleshoot, avg = `avg...win.`) # may need to update original variable
-          ggplot(troubleshoot) +
-               geom_line(aes(x=bins,y=avg)) +
-               geom_vline(aes(xintercept=-0.3), color="Blue") +
-               xlab("NDWI") +
-               ylab("Count") +
-               theme(panel.background = element_rect(fill = "white", colour = "black")) +
-               theme(aspect.ratio = 1) +
-               theme(axis.text = element_text(face = "plain", size = 12))
+          # win <- 6 # the location of the averaging window in avg variable; lower number is small window, larger is smoother
+          # troubleshoot <- data.frame(bins,avg[,win])
+          # troubleshoot <- rename(troubleshoot, avg = `avg...win.`) # may need to update original variable
+          # ggplot(troubleshoot) +
+          #      geom_line(aes(x=bins,y=avg)) +
+          #      #geom_vline(aes(xintercept=-0.3), color="Blue") +
+          #      xlab("NDWI") +
+          #      ylab("Count") +
+          #      theme(panel.background = element_rect(fill = "white", colour = "black")) +
+          #      theme(aspect.ratio = 1) +
+          #      theme(axis.text = element_text(face = "plain", size = 12))
           
-          # set error values for the result vectors in case neither two nor three peaks are found:
-          threepeak <- 1 # revised error values so the histogram visualization is acceptable; however, after debugging, should go back to -9999
-          twopeak <- 1
-          threemid <- 1
-          twomid <- 1
-          
-          for (w in 1:10){
-               # testing in three peaks
-               # due to the order of the w variable, only the 'smoothest' result will be kept
-               if ((nop[w])==3){
-                    # finds the second and third peak
-                    for (j in 1:200){
-                         if ((peaks[j,w])==2){
-                              sec <- j # stores the index of the second peak
-                         }
-                         if ((peaks[j,w])==3){
-                              thr <- j # stores the index of the third peak
-                         }
-                    }
-                    # finds minimum between second and third peak
-                    m <- max(v) # create variable for minimum, initially set higher than any value
-                    for (j in (sec):(thr)){
-                         if ((avg[j,w])<m){
-                              goal <- j
-                              m <- avg[j,w]
-                         }
-                    }
-                    threepeak <- (bins[(goal)])
-                    threemid <- (bins[sec] + bins[thr]) / 2
-               }
-               # test in case exactly three peaks were not found
-               if ((nop[w])==2){
-                    # find the position of the first and second (the only) peaks
-                    for (j in 1:200){
-                         if ((peaks[j,w])==1){
-                              fst <- j # stores the index of the second peak
-                         }
-                         if ((peaks[j,w])==2){
-                              sec <- j # stores the index of the third peak
-                         }
-                    }
-                    # finds minimum between first and second peak
-                    m <- max(v) # create variable for minimum, initially set higher than any value
-                    for (j in (fst):(sec)){
-                         if ((avg[j,w])<m){
-                              goal <- j
-                              m <- avg[j,w]
-                         }
-                    }
-                    twopeak <- (bins[(goal)])
-                    twomid <- (bins[sec] + bins[thr]) / 2
+          # Find first smoothed single-peak avg data
+          for (w in 1:maxWindow) {
+               if (nop[1,w] == 1) {
+                    singleWindow <- w
+                    break
                }
           }
+          peakIndex <- which(peaks[,singleWindow]==1) # which index is the peak
+          peakValue <- bins[peakIndex]
           
-          # Used in issue #1: Recheck histogram values.  Will comment out after diagnostics
-          ndwi_values <- data.frame(ndwi@data@values)
-          ndwi_values <- rename(ndwi_values, data=ndwi.data.values)
+          # Find the smooth tail (on the right/positive side of the distribution)
+          ndwiSlope <- array(0, dim = c(binNumber)) # derivative of smoothed NDWI histogram/distribution
+          for (w in 2:(binNumber-1)) {
+               ndwiSlope[w] <- (avg[w+1,singleWindow] - avg[w-1,singleWindow]) / (bins[w+1] - bins[w-1])
+          }
+          slopeLimit <- 0.05 * max(abs(ndwiSlope)) # threshold: 5% of max slope
+          for (w in (peakIndex+1):binNumber) {
+               if (abs(ndwiSlope[w]) < slopeLimit) {
+                    flatIndex <- w
+                    break
+               }
+          }
+          flatValue <- bins[flatIndex]
+          
+          # Average the peak and flat values
+          ndwiThreshold <- (peakValue+flatValue)/2
           
           # HISTOGRAM VISUALIZATION
-          # h <- ggplot(ndwi_values, aes(x=data)) +
+          ndwi_values <- data.frame(ndwi@data@values)
+          smooth <- data.frame(bins,avg[,singleWindow])
+          # h <- ggplot(ndwi_values, aes(x=ndwi.data.values)) +
           #      geom_histogram(breaks = (c(0:200)/100-1), color = "black", fill = "gray", na.rm = TRUE) +
-          #      geom_vline(aes(xintercept = twopeak), color = "green") +
-          #      geom_vline(aes(xintercept = twomid), color = "green") +
-          #      geom_vline(aes(xintercept = threepeak), color = "blue") +
-          #      geom_vline(aes(xintercept = threemid), color = "green") +
+          #      geom_line(data = smooth, aes(x=bins, y= `avg...singleWindow.`), color = "blue") +
+          #      geom_vline(aes(xintercept = ndwiThreshold), color = "green") +
           #      xlim(c(-1,1)) +
           #      ylim(c(0,2000)) +
           #      xlab("NDWI") +
@@ -268,32 +228,10 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           #      theme(axis.text = element_text(face = "plain", size = 12))
           # ggsave(paste0(root,"hist.eps"), h, device = "eps", dpi = 72)
           
-          # AVERAGING VISUALIZATION
-          # win <- 5 # the location of the averaging window in avg variable; lower number is small window, larger is smoother
-          # troubleshoot <- data.frame(bins,avg[,win])
-          # troubleshoot <- rename(troubleshoot, avg = `avg...win.`) # may need to update original variable
-          # ggplot(troubleshoot) +
-          #      geom_line(aes(x=bins,y=avg)) +
-          #      geom_vline(aes(xintercept=bins[which(peaks[,win]==1)]), color = "red") +
-          #      geom_vline(aes(xintercept=bins[which(peaks[,win]==2)]), color = "red") +
-          #      #geom_vline(aes(xintercept=bins[which(peaks[,win]==3)]), color = "red") +
-          #      #geom_vline(aes(xintercept=bins[which(peaks[,win]==4)]), color = "red") +
-          #      #geom_vline(aes(xintercept=bins[which(peaks[,win]==5)]), color = "red") +
-          #      xlab("NDWI") +
-          #      ylab("Count") +
-          #      theme(panel.background = element_rect(fill = "white", colour = "black")) +
-          #      theme(aspect.ratio = 1) +
-          #      theme(axis.text = element_text(face = "plain", size = 12))
-          # ggsave(paste0(root,"avg_win.eps"), wa, device = "eps", dpi = 72)
-          # POSSIBLE: could consider averaging window 5, larger averages
-          
           # Water's Edge LOOP ENDS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
           
-          output[3] <- threepeak #for output file: value for the edge of water (3 peak)
-          output[4] <- threemid
-          output[5] <- twopeak #for output file: value for the edge of water (2 peak)
-          output[6] <- twomid
-          
+          output[3] <- ndwiThreshold
+
           # Buffalo Creek
           # RDB=(609589.376, 4507801.407)
           # LDB=(609634.607, 4507831.586)
@@ -301,28 +239,12 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           #x2 <- (609634.607)
           #y1 <- (4507801.407)
           #y2 <- (4507831.586)
-          # Mutale River downstream
-          # Right=(246095.0,7478932.5), remember, 36S
-          # Left =(246072.4,7478992.1)
+          # Mutale River downstream (EPSG: 32736, UTM: 36S)
           x1 <- (246130)
           x2 <- (246066)
           y1 <- (7478894)
           y2 <- (7479006)
-          # Mutale River upstream
-          # Right=(246095.0,7478932.5), 36S
-          # Left =(246072.4,7478992.1)
-          #x1 <- (246095.0)
-          #x2 <- (246072.4)
-          #y1 <- (7478932.5)
-          #y2 <- (7478992.1)
-          # Limpopo River above Xai-Xai 
-          # Right=(557829.8,7257242.8), 36S
-          # Left =(557988.6,7257355.2)
-          #x1 <- (557829.8)
-          #x2 <- (557988.6)
-          #y1 <- (7257242.8)
-          #y2 <- (7257355.2)
-          
+
           # Slopes:
           ma <- (y2-y1)/(x2-x1)
           #this next part will rely on UTM (the coordinates are in meters)
@@ -341,16 +263,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           }
           
           spat <- SpatialPoints(pointers)
-          
-          # Testing three-peak and two-peak water threshold
-          options <- sort(c(threepeak, threemid, twopeak, twomid), decreasing = TRUE)
-          ndwi_threshold <- 1
-          for (i in 1:4) {
-               if (options[i] > -0.65) {
-                    ndwi_threshold <- options[i]
-               }
-          }
-          
+
           alng <- extract(ndwi, spat, method='simple')
           # plot(alng, xlab="Position along transect", ylab="NDWI")
           # To export table or NDWI v. position as a new file
@@ -389,34 +302,34 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           }
           
           for (i in (2:f)){
-               if (alng_per[i,2]>ndwi_threshold){
-                    if (alng_per[i-1,2]<ndwi_threshold){
+               if (alng_per[i,2]>ndwiThreshold){
+                    if (alng_per[i-1,2]<ndwiThreshold){
                          i1 <- alng_per[i-1,1]
                          i2 <- alng_per[i,1]
                          j1 <- alng_per[i-1,2]
                          j2 <- alng_per[i,2]
-                         n <- ndwi_threshold    
+                         n <- ndwiThreshold    
                          RDB <- ((n-(j1))*((i2-i1)/(j2-j1))+i1)
                          break
                     }
                }
           }
           for (i in 1:(f-1)){
-               if (alng_per[f-i,2]>ndwi_threshold){        #expressing the index such that when i = 1, f, and when i = 2, f-1.
-                    if (alng_per[f-i+1,2]<ndwi_threshold){
+               if (alng_per[f-i,2]>ndwiThreshold){        #expressing the index such that when i = 1, f, and when i = 2, f-1.
+                    if (alng_per[f-i+1,2]<ndwiThreshold){
                          i1 <- alng_per[f-i+1,1]
                          i2 <- alng_per[f-1,1]
                          j1 <- alng_per[f-i+1,2]
                          j2 <- alng_per[f-1,2]
-                         n <- ndwi_threshold    
+                         n <- ndwiThreshold    
                          LDB <- ((n-(j1))*((i2-i1)/(j2-j1))+i1)
                          break
                     }
                }
           }
-          output[5] <- LDB #location in meters of bank 1
-          output[6] <- RDB #location in meters of bank 2
-          output[7] <- LDB-RDB #gives width in meters
+          output[4] <- LDB #location in meters of bank 1
+          output[5] <- RDB #location in meters of bank 2
+          output[6] <- LDB-RDB #gives width in meters
      }
      #rm(alng_per,avg,dm,e,h,ndwi,nop,peaks,pointers,rbrick,rc,spat,test,a,alng,b,bins,c,cnt,f,fl,fn,goal,i,i1,i2,j,j1,j2,k,LDB,m,ma,mp,n,ra,rc2,rc4,RDB,restart,root,sec,t,thr,threepeak,twopeak,v,w,x1,x2,y1,y2) # this tried to remove vars that didnt exist... oops
      # for single string processing

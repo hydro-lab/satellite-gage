@@ -79,6 +79,15 @@ imagebank <- imagebank %>%
      rename(dt=di,md=id) %>% 
      filter(is.na(md)==FALSE) # will contain imagebank data frame with date (dt), image (im), and metadata (md)
 
+# Store geographic data based on crop extent from QGIS analysis:
+# extent format (xmin,xmax,ymin,ymax)
+## Buffalo Creek:
+#e <- as(extent(609555.5999,609709.1999,4507753.099,4507867.5999 ), 'SpatialPolygons') # Extent needed
+#crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
+## Mutale River downstream
+e <- as(extent(245850, 246350, 7478700, 7479200), 'SpatialPolygons')
+crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
+
 # LOOP STARTS HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # SINGLE
 #widths <- array(NA, dim = c((nrow(imagebank)),7))
@@ -101,15 +110,6 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
      # Import raster image, crops to chosen extent
      fn <- imagebank$im[q]
      pic <- stack(fn)
-     
-     # set crop extent from QGIS analysis:
-     # extent format (xmin,xmax,ymin,ymax)
-     ## Buffalo Creek:
-     #e <- as(extent(609555.5999,609709.1999,4507753.099,4507867.5999 ), 'SpatialPolygons') # Extent needed
-     #crs(e) <- "+proj=utm +zone=17 +datum=WGS84"
-     ## Mutale River downstream
-     e <- as(extent(245850, 246350, 7478700, 7479200), 'SpatialPolygons')
-     crs(e) <- "+proj=utm +zone=36 +datum=WGS84" # may need negative y values
 
      # Set extent from the Planet file !! This is the area from the picture
      test <- as(extent(pic), 'SpatialPolygons') # Extent of image
@@ -281,9 +281,9 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           
           RDB <- -9999 # preallocate in case of failed search algorithm
           LDB <- -9999
-          alng_per <- array(-9, dim=c(f,2)) #allocation for the midpoints
+          alng_per <- array(-9, dim=c(f,2)) # allocation for the midpoints
           # when you reach -9 in that array, you've reached the end of the midpoints/values found
-          restart <- 2 #initial start for i search
+          restart <- 2 # initial start for i search
           for (j in 1:f){
                cnt <- 1
                for (i in restart:f) {
@@ -296,13 +296,13 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
                          }
                     }
                }
-               mp <- ((cnt*ra)/2) #ra is the spacing, and mp gives the midpoint of the current distance section
+               mp <- ((cnt*dt)/2) #ra is the spacing, and mp gives the midpoint of the current distance section
                if (is.na(alng[i-1])==FALSE) {
                     if (i<(f)) {
-                         alng_per[j,1] <- (((i-1)*ra)-mp) 
+                         alng_per[j,1] <- (((i-1)*dt)-mp) 
                          alng_per[j,2] <- alng[i-1] 
                     } else {
-                         alng_per[j,1] <- ((f*ra)-mp) 
+                         alng_per[j,1] <- ((f*dt)-mp) 
                          alng_per[j,2] <- alng[i-1] 
                     }
                }
@@ -311,7 +311,14 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
                } 
           }
           
-          for (i in (2:f)){
+          # Find starting point in the alng_per array:
+          for (i in 1:f) {
+               if (alng_per[i,1] < 0) {
+                    fin <- i - 1
+                    break
+               }
+          }
+          for (i in (2:fin)){
                if (alng_per[i,2]>ndwiThreshold){
                     if (alng_per[i-1,2]<ndwiThreshold){
                          i1 <- alng_per[i-1,1]
@@ -324,13 +331,13 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
                     }
                }
           }
-          for (i in 1:(f-1)){
-               if (alng_per[f-i,2]>ndwiThreshold){        #expressing the index such that when i = 1, f, and when i = 2, f-1.
-                    if (alng_per[f-i+1,2]<ndwiThreshold){
-                         i1 <- alng_per[f-i+1,1]
-                         i2 <- alng_per[f-1,1]
-                         j1 <- alng_per[f-i+1,2]
-                         j2 <- alng_per[f-1,2]
+          for (i in 1:(fin-1)){
+               if (alng_per[fin-i,2]>ndwiThreshold){        #expressing the index such that when i = 1, f, and when i = 2, f-1.
+                    if (alng_per[fin-i+1,2]<ndwiThreshold){
+                         i1 <- alng_per[fin-i+1,1]
+                         i2 <- alng_per[fin-1,1]
+                         j1 <- alng_per[fin-i+1,2]
+                         j2 <- alng_per[fin-1,2]
                          n <- ndwiThreshold    
                          LDB <- ((n-(j1))*((i2-i1)/(j2-j1))+i1)
                          break
@@ -339,7 +346,12 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           }
           output[4] <- LDB #location in meters of bank 1
           output[5] <- RDB #location in meters of bank 2
-          output[6] <- LDB-RDB #gives width in meters
+          if ((LDB > 0) & (RDB > 0)) {
+               riverWidth <- LDB - RDB
+          } else {
+               riverWidth <- -9999
+          }
+          output[6] <- riverWidth #gives width in meters
      }
      #rm(alng_per,avg,dm,e,h,ndwi,nop,peaks,pointers,rbrick,rc,spat,test,a,alng,b,bins,c,cnt,f,fl,fn,goal,i,i1,i2,j,j1,j2,k,LDB,m,ma,mp,n,ra,rc2,rc4,RDB,restart,root,sec,t,thr,threepeak,twopeak,v,w,x1,x2,y1,y2) # this tried to remove vars that didnt exist... oops
      # for single string processing

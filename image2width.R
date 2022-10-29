@@ -96,6 +96,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
      dm <- as.matrix(rc)
      rc2 <- as.numeric(dm[2]) # Green
      rc4 <- as.numeric(dm[4]) # NIR
+     rm(fl, rc, dm)
      
      # Import raster image, crops to chosen extent
      fn <- imagebank$im[q]
@@ -114,6 +115,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
      test <- as(extent(pic), 'SpatialPolygons') # Extent of image
      #crs(test) <- "+proj=utm +zone=17 +datum=WGS84"
      crs(test) <- "+proj=utm +zone=36 +datum=WGS84"
+     rm(test)
      if (gCovers(test,e)) { # returns TRUE if no point in spgeom2 (e, needed) is outside spgeom1 (test, image extent) # used to be (gWithin(e, test, byid = FALSE))
           r <- crop(pic, e)
           rm(pic) # remove rest of image from RAM
@@ -145,6 +147,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
                    plot=FALSE) 
           bins <- h$mids # positions    number
           v <- h$counts # counts        integer
+          rm(h)
           
           # Allocate arrays used in analysis
           maxWindow <- 10 # This is the control on the maximum averaging window AND the size of the following arrays.
@@ -251,21 +254,25 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           dx = sqrt((dt^2)/((m^2)+1)) # step size in the x-direction
           t <- sqrt(((x2-x1)^2) + ((y2-y1)^2)) # length along search transect
           f <- ceiling(t/dt) # number of steps needed to cross transect
+          if (x1 > x2) {
+               dx <- (-1)*dx
+          }
           
           transect <- array(999.999, dim = c(f,2)) # [,1] is x, [,2] is y
           transect[1,1] <- x1
           transect[1,2] <- y1
           for (i in 2:f){
-               x <- transect[(f-1),1] # last x value
-               y <- transect[(f-1),2] # last y value
-               transect[f,1] <- x + dx # next x value
-               transect[f,2] <- y + (m * (transect[f,1] - x)) # next y value
+               x <- transect[(i-1),1] # last x value
+               y <- transect[(i-1),2] # last y value
+               transect[i,1] <- x + dx # next x value
+               transect[i,2] <- y + (m * (transect[i,1] - x)) # next y value
           }
           
           endPoints <- SpatialPoints(rbind(c(x1,y1),c(x2,y2)), proj4string = crs)
           # plot(ndwi)
           # points(endPoints)
-          spat <- SpatialPoints(pointers, proj4string = crs)
+          spat <- SpatialPoints(transect, proj4string = crs)
+          # points(spat)
 
           alng <- extract(ndwi, spat, method='simple')
           # plot(alng, xlab="Position along transect", ylab="NDWI")

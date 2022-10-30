@@ -115,7 +115,6 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
      test <- as(extent(pic), 'SpatialPolygons') # Extent of image
      #crs(test) <- "+proj=utm +zone=17 +datum=WGS84"
      crs(test) <- "+proj=utm +zone=36 +datum=WGS84"
-     rm(test)
      if (gCovers(test,e)) { # returns TRUE if no point in spgeom2 (e, needed) is outside spgeom1 (test, image extent) # used to be (gWithin(e, test, byid = FALSE))
           r <- crop(pic, e)
           rm(pic) # remove rest of image from RAM

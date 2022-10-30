@@ -197,8 +197,9 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           }
           if (singleWindow == -9) { # Only if there is no singleWindow found.
                print(root)
-               print("Averaging failed to fine single peak")
-               peakValue <- 0
+               print("Averaging failed to find single peak")
+               peakIndex <- 75
+               peakValue <- -0.5
           }
           
           # Find the smooth tail (on the right/positive side of the distribution)

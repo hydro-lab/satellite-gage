@@ -335,9 +335,9 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
                if (alng_per[fin-i,2]>ndwiThreshold){        #expressing the index such that when i = 1, f, and when i = 2, f-1.
                     if (alng_per[fin-i+1,2]<ndwiThreshold){
                          i1 <- alng_per[fin-i+1,1]
-                         i2 <- alng_per[fin-1,1]
+                         i2 <- alng_per[fin-i,1]
                          j1 <- alng_per[fin-i+1,2]
-                         j2 <- alng_per[fin-1,2]
+                         j2 <- alng_per[fin-i,2]
                          n <- ndwiThreshold    
                          LDB <- ((n-(j1))*((i2-i1)/(j2-j1))+i1)
                          break
@@ -347,7 +347,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           output[4] <- LDB #location in meters of bank 1
           output[5] <- RDB #location in meters of bank 2
           if ((LDB > 0) & (RDB > 0)) {
-               riverWidth <- LDB - RDB
+               riverWidth <- abs(LDB - RDB)
           } else {
                riverWidth <- -9999
           }

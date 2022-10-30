@@ -186,14 +186,20 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           #      theme(axis.text = element_text(face = "plain", size = 12))
           
           # Find first smoothed single-peak avg data
+          singleWindow <- -9 # signal value
           for (w in 1:maxWindow) {
                if (nop[1,w] == 1) {
                     singleWindow <- w
+                    peakIndex <- which(peaks[,singleWindow]==1) # which index is the peak
+                    peakValue <- bins[peakIndex]
                     break
                }
           }
-          peakIndex <- which(peaks[,singleWindow]==1) # which index is the peak
-          peakValue <- bins[peakIndex]
+          if (singleWindow == -9) { # Only if there is no singleWindow found.
+               print(root)
+               print("Averaging failed to fine single peak")
+               peakValue <- 0
+          }
           
           # Find the smooth tail (on the right/positive side of the distribution)
           ndwiSlope <- array(0, dim = c(binNumber)) # derivative of smoothed NDWI histogram/distribution

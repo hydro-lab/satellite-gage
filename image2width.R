@@ -148,7 +148,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           v <- h$counts # counts        integer
           rm(h)
           
-          if ((mean(v)) < 1) { # determine if data exist.
+          if ((mean(v)) > 1) { # determine if data exist.
           
           # Allocate arrays used in analysis
           maxWindow <- 10 # This is the control on the maximum averaging window AND the size of the following arrays.

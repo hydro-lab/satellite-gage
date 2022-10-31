@@ -11,9 +11,11 @@
 library(readr)
 library(lubridate)
 library(ggplot2)
+library(latex2exp)
 library(dplyr)
 
 # Remember to set working directory
+setwd("/Volumes/T7/planet/mutale/width2flow/")
 
 # Channel-specific information
 calibration_discharge <- 0.28 # discharge, cubic meters per second
@@ -24,13 +26,14 @@ profile <- read_csv("profile.csv") # (2) $location_m and $height_m
 if (mean(profile$height_m)>0){ # guesses if the average height is positive, that the height vector points down
      profile$height_m = -profile$height_m # code is based on the height vector to point up
 }
-ggplot(profile) +
+p <- ggplot(profile) +
      geom_line(aes(x = location_m, y = height_m)) +
      xlab("Cross-stream distance (m)") +
      ylab("Bathymetry (m)") +
      theme(panel.background = element_rect(fill = "white", colour = "black")) +
      theme(aspect.ratio = 1) +
      theme(axis.text = element_text(face = "plain", size = 12))
+ggsave("profile.eps", p, device = "eps", dpi = 72)
 
 min_depth <- min(profile$height_m)
 W <- profile$location_m
@@ -207,7 +210,7 @@ if ((calibration_width>min_width)&&(calibration_width<max_width)){ # check valid
   print("calibration failed")
 }
 
-widths <- read_csv("widths.csv") # (7) $dt, $filename, $ndwi_threshold_3, $ndwi_threshold_2, $left_m, $right_m, $width_m
+widths <- read_csv("widths.csv") # (7) $dt, $filename, $ndwi_threshold, $left_m, $right_m, $width_m
 # now, the data are in a dataframe called widths.
 dt <- widths$dt
 width <- widths$width_m
@@ -257,3 +260,13 @@ for (k in 1:(nrow(widths))){
 
 satellite.gage <- data.frame(dt,width,q)
 write_csv(satellite.gage, "sat_gage.csv")
+
+ggplot(satellite.gage) +
+     geom_point(aes(x=dt,y=q)) +
+     ylim(c(0,15)) +
+     xlab("Date") +
+     ylab(TeX(r'(Discharge ($m^3/s$))')) +
+     theme(panel.background = element_rect(fill = "white", colour = "black")) +
+     theme(aspect.ratio = 1) +
+     theme(axis.text = element_text(face = "plain", size = 12))
+

@@ -196,7 +196,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
                }
           }
           if (singleWindow == -9) { # Only if there is no singleWindow found.
-               print(root)
+               #print(root)
                #print("Averaging failed to find single peak")
                peakIndex <- 75
                peakValue <- -0.5

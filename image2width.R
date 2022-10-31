@@ -98,6 +98,15 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
      output <- array(NA, dim = 6) # output array - will be filled in if data are valid
      output[1] <- date(as_datetime(imagebank$dt[q])) # to check, use: as_date(output[1])
      
+     # To create filename root and establish root for exports
+     p <- strsplit(imagebank$im[q], "_3B_AnalyticMS.tif")
+     r <- strsplit(p[[1]], "/")
+     lr <- tolower(r[[1]])
+     len <- length(lr)
+     root <- lr[[len]]
+     rm(p,r,lr,len)
+     output[2] <- root #for output file: root name of image
+     
      #Import raw Planet metadata to get the reflectance coefficients
      fn <- imagebank$md[q]
      fl <- xmlParse(fn)
@@ -123,19 +132,10 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           ndwi <- ((rc2*r[[2]]) - (rc4*r[[4]])) / ((rc2*r[[2]]) + (rc4*r[[4]]))
           # plot(ndwi) # for viewing during development
           
-          # To export cropped NDWI as a new file and create filename root
-          p <- strsplit(imagebank$im[q], "_3B_AnalyticMS.tif")
-          r <- strsplit(p[[1]], "/")
-          lr <- tolower(r[[1]])
-          len <- length(lr)
-          root <- lr[[len]]
-          rm(p,r,lr,len)
           # writeRaster(x = ndwi, ## this does not need to be done, just a nice record.
           #             filename= paste(root, "cndwi.tif", sep="."),
           #             format = "GTiff", # save as a tif, save as a FLOAT if not default, not integer
           #             overwrite = TRUE)  # OPTIONAL - be careful. This will OVERWRITE previous files.
-          
-          output[2] <- root #for output file: root name of image
           
           # This code finds the boundary of the water in a normalized difference water index 
           # This code uses the cropped, single-layer, NDWI image.  Image based on the histogram of the pixel values.
@@ -147,6 +147,8 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           bins <- h$mids # positions    number
           v <- h$counts # counts        integer
           rm(h)
+          
+          if ((mean(v)) < 1) { # determine if data exist.
           
           # Allocate arrays used in analysis
           maxWindow <- 10 # This is the control on the maximum averaging window AND the size of the following arrays.
@@ -241,9 +243,8 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           
           output[3] <- ndwiThreshold
 
-          # Buffalo Creek
-          # RDB=(609589.376, 4507801.407)
-          # LDB=(609634.607, 4507831.586)
+          # Buffalo Creek (UTM: 17N)
+          #crs <- sp::CRS("+proj=utm +zone=17 +datum=WGS84")
           #x1 <- (609589.376)
           #x2 <- (609634.607)
           #y1 <- (4507801.407)
@@ -262,7 +263,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           dx = sqrt((dt^2)/((m^2)+1)) # step size in the x-direction
           t <- sqrt(((x2-x1)^2) + ((y2-y1)^2)) # length along search transect
           f <- ceiling(t/dt) # number of steps needed to cross transect
-          if (x1 > x2) {
+          if (x1 > x2) { # determine which direction the transect should head.
                dx <- (-1)*dx
           }
           
@@ -283,6 +284,9 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           # points(spat)
 
           alng <- extract(ndwi, spat, method='simple')
+          
+          if (is.na(mean(alng))==FALSE) { # determine if data exist along alng
+               
           # plot(alng, xlab="Position along transect", ylab="NDWI")
           # To export table or NDWI v. position as a new file
           # write.table(alng, file = paste(root, "distwidth.csv", sep="."), append = TRUE, sep = ",", dec = ".", col.names = FALSE)
@@ -360,7 +364,10 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
                riverWidth <- -9999
           }
           output[6] <- riverWidth #gives width in meters
-     }
+          } # end of if is.na(mean(alng))==FALSE to determine if data exist along alng
+          } # end of if hist is zero/NA - no data exist
+     } # end of if gCovers
+     
      #rm(alng_per,avg,dm,e,h,ndwi,nop,peaks,pointers,rbrick,rc,spat,test,a,alng,b,bins,c,cnt,f,fl,fn,goal,i,i1,i2,j,j1,j2,k,LDB,m,ma,mp,n,ra,rc2,rc4,RDB,restart,root,sec,t,thr,threepeak,twopeak,v,w,x1,x2,y1,y2) # this tried to remove vars that didnt exist... oops
      # for single string processing
      # for (i in 1:7) {

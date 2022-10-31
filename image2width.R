@@ -371,11 +371,10 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
 
 dt <- as_date(as.numeric(widths[,1]))
 filename <- widths[,2]
-ndwi_threshold_3 <- as.numeric(widths[,3])
-ndwi_threshold_2 <- as.numeric(widths[,4])
-left_m <- as.numeric(widths[,5])
-right_m <- as.numeric(widths[,6])
-width_m <- as.numeric(widths[,7])
-widths <- data.frame(dt,filename,ndwi_threshold_3,ndwi_threshold_2,left_m,right_m,width_m)
+ndwi_threshold <- as.numeric(widths[,3])
+left_m <- as.numeric(widths[,4])
+right_m <- as.numeric(widths[,5])
+width_m <- as.numeric(widths[,6])
+widths <- data.frame(dt,filename,ndwi_threshold,left_m,right_m,width_m)
 write_csv(widths, "/Users/davidkahler/Documents/R/satellite-gage/widths.csv")
 

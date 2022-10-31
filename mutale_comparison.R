@@ -75,8 +75,8 @@ ggplot(discharge) +
 
 # One-to-one comparison
 discharge_wide <- discharge %>%
-     pivot_wider(names_from = "measurement",values_from = "value") #%>%
-     #filter(width<40, width>=0)
+     pivot_wider(names_from = "measurement",values_from = "value") %>%
+     filter(width<80, width>=0)
 ggplot(discharge_wide) +
      geom_point(aes(x=gage,y=planet)) +
      #coord_cartesian(xlim = c(0,2), ylim = c(0,2)) +

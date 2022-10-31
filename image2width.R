@@ -197,7 +197,7 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
           }
           if (singleWindow == -9) { # Only if there is no singleWindow found.
                print(root)
-               print("Averaging failed to find single peak")
+               #print("Averaging failed to find single peak")
                peakIndex <- 75
                peakValue <- -0.5
           }
@@ -377,4 +377,5 @@ right_m <- as.numeric(widths[,5])
 width_m <- as.numeric(widths[,6])
 widths <- data.frame(dt,filename,ndwi_threshold,left_m,right_m,width_m)
 write_csv(widths, "/Users/davidkahler/Documents/R/satellite-gage/widths.csv")
+print("Program complete")
 

@@ -208,13 +208,15 @@ widths <- foreach (q = 1:(nrow(imagebank)), .combine = 'rbind') %dopar% { # para
                ndwiSlope[w] <- (avg[w+1,singleWindow] - avg[w-1,singleWindow]) / (bins[w+1] - bins[w-1])
           }
           slopeLimit <- 0.05 * max(abs(ndwiSlope)) # threshold: 5% of max slope
+          flatIndex <- 110
+          flatValue <- 0.1 # default value to produce a threshold of -0.2
           for (w in (peakIndex+1):binNumber) {
                if (abs(ndwiSlope[w]) < slopeLimit) {
                     flatIndex <- w
+                    flatValue <- bins[flatIndex]
                     break
                }
           }
-          flatValue <- bins[flatIndex]
           
           # Average the peak and flat values
           ndwiThreshold <- (peakValue+flatValue)/2

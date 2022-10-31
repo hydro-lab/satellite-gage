@@ -75,8 +75,8 @@ ggplot(discharge) +
 
 # One-to-one comparison
 discharge_wide <- discharge %>%
-     pivot_wider(names_from = "measurement",values_from = "value") %>%
-     filter(width<30, width>=0)
+     pivot_wider(names_from = "measurement",values_from = "value") #%>%
+     #filter(width<40, width>=0)
 ggplot(discharge_wide) +
      geom_point(aes(x=gage,y=planet)) +
      #coord_cartesian(xlim = c(0,2), ylim = c(0,2)) +
@@ -93,7 +93,7 @@ ggplot(discharge_wide) +
      xlab(TeX(r'(Gage Discharge ($m^3/s$))')) +
      ylab("Satellite Width (m)") +
      xlim(c(0,15)) +
-     ylim(c(0,30)) +
+     ylim(c(0,80)) +
      theme(panel.background = element_rect(fill = "white", colour = "black")) +
      theme(aspect.ratio = 1) +
      theme(axis.text = element_text(face = "plain", size = 12))
